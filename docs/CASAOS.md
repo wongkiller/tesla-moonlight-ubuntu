@@ -20,8 +20,13 @@ without editing the file:
 
 ```bash
 SUNSHINE_CONTAINER_NAME=sunshine-03 SUNSHINE_WEB_PORT=43881 \
-  docker compose -f docker-compose.casaos.yml up -d
+docker compose -f docker-compose.casaos.yml up -d
 ```
+
+The supplied Compose file gives Chrome a 1 GiB `/dev/shm`. The installer also
+starts Chrome with `--disable-dev-shm-usage`, so a manually-created CasaOS
+container with Docker's 64 MiB default does not crash when YouTube changes
+pages or starts a video.
 
 In CasaOS or Portainer, the same file can be pasted into the Compose/Stack web
 editor. Keep **Privileged mode disabled** and do not add a volume if you want the
@@ -95,4 +100,3 @@ docker exec sunshine-02 cat /home/sunshine/.local/share/tesla-moonlight-ubuntu/s
 `READY` in the logs confirms that the configured public hostname reaches this
 specific installation. A Cloudflare HTTP 530 means the hostname route exists
 but Cloudflare cannot currently reach the Tunnel connector.
-

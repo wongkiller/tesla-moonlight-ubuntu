@@ -18,27 +18,6 @@ import urllib.request
 
 STATE = Path.home() / '.local/share/tesla-moonlight-ubuntu'
 DESKTOP = STATE / 'wsl-desktop'
-CHROME_DISABLED_FEATURES = (
-    'OptGuideEnableXNNPACKDelegateWithTFLite',
-    'OptimizationGuideModelExecution',
-    'OptimizationGuideModelDownloading',
-    'OptimizationTargetPrediction',
-    'OptimizationHints',
-    'OptimizationHintsFetching',
-    'HistoryEmbeddings',
-    'HistoryEmbeddingsAnswers',
-    'HistoryEmbeddingsIntentClassifier',
-    'OmniboxHistoryEmbeddings',
-    'PageContentAnnotations',
-    'PageEntitiesPageContentAnnotations',
-    'PageVisibilityPageContentAnnotations',
-    'TextEmbeddingPageContentAnnotations',
-    'PageContentAnnotationsValidation',
-    'PageVisibilityBatchAnnotations',
-    'TextEmbeddingBatchAnnotations',
-)
-
-
 def health_logger():
     logger = logging.getLogger('readiness')
     logger.setLevel(logging.INFO)
@@ -219,14 +198,12 @@ def main(role):
         run('node', STATE / 'youtube-remote/exit-server.js', STATE / 'youtube-remote/control.token', STATE / 'youtube-remote/stop.sh')
     elif role == 'youtube-browser':
         wait_display()
-        # A new profile generation discards cached Chrome ML models that can
-        # keep crashing after the responsible feature has been disabled.
         version = subprocess.run(['google-chrome', '--version'], capture_output=True, text=True).stdout.strip()
         shm = os.statvfs('/dev/shm')
         shm_available = shm.f_bavail * shm.f_frsize
         print(f'{datetime.now(timezone.utc).isoformat()} START {version}; '
               f'profile=profile-v5; dev_shm_available={shm_available}; '
-              f'disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
+              'shared_memory=container-filesystem', flush=True)
         run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v5'),
             '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9227',
             '--remote-allow-origins=http://127.0.0.1:9227', '--ozone-platform=x11',
@@ -237,10 +214,7 @@ def main(role):
             # part of it, and Chrome 153 can trap its renderer compositor when
             # YouTube exhausts the remainder. Store Chrome shared memory in
             # the container filesystem so manually-created containers work too.
-            '--disable-dev-shm-usage',
-            # Chrome's local ML helpers are unrelated to YouTube playback. On
-            # older AMD hosts their TFLite/XNNPACK path can crash the renderer.
-            '--disable-features=' + ','.join(CHROME_DISABLED_FEATURES))
+            '--disable-dev-shm-usage')
     elif role == 'tunnel':
         wait_url('http://127.0.0.1:8080/')
         run('cloudflared', 'tunnel', '--no-autoupdate', 'run', '--token-file', STATE / 'server/tunnel.token')
