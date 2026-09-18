@@ -205,7 +205,11 @@ def main(role):
             '--remote-allow-origins=http://127.0.0.1:9227', '--ozone-platform=x11',
             '--app=https://www.youtube.com/', '--start-fullscreen', '--no-first-run',
             '--no-default-browser-check', '--disable-session-crashed-bubble', '--disable-background-mode',
-            '--force-device-scale-factor=1.25', '--disable-gpu', '--disable-quic')
+            '--force-device-scale-factor=1.25', '--disable-gpu', '--disable-quic',
+            # Chrome 153's CPU optimization-guide model can select an XNNPACK
+            # instruction path that crashes the YouTube renderer with SIGILL on
+            # older AMD hosts. Video playback does not depend on this model.
+            '--disable-features=OptGuideEnableXNNPACKDelegateWithTFLite,OptimizationGuideModelExecution')
     elif role == 'tunnel':
         wait_url('http://127.0.0.1:8080/')
         run('cloudflared', 'tunnel', '--no-autoupdate', 'run', '--token-file', STATE / 'server/tunnel.token')
