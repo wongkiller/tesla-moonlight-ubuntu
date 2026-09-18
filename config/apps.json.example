@@ -1,0 +1,6 @@
+{
+  "env": {},
+  "apps": [
+    { "name": "Ubuntu Desktop", "image-path": "desktop.png" }
+  ]
+}

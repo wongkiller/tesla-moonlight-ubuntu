@@ -1,0 +1,11 @@
+/upstream-mac/
+/build/
+/config/install.json
+/runtime/*
+!/runtime/.gitkeep
+**/target/
+**/node_modules/
+**/dist/
+**/__pycache__/
+*.pyc
+/.local-test/

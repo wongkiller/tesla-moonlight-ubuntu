@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#090b10">
+    <title>Camera &amp; Mic Studio</title>
+    <link rel="icon" href="resources/tesla_logo.png">
+    <link rel="stylesheet" href="media-studio.css">
+    <script src="tesla-viewport-fix.js"></script>
+    <script type="module" src="media-studio.js" defer></script>
+</head>
+<body>
+    <main class="studio-shell">
+        <header class="studio-header">
+            <button id="back-button" class="icon-button" type="button" aria-label="Back to Moonlight">←</button>
+            <div class="studio-title">
+                <span class="studio-mark" aria-hidden="true">●</span>
+                <div><strong>Camera &amp; Mic</strong><small>Tesla Studio</small></div>
+            </div>
+            <span id="secure-badge" class="secure-badge">Checking…</span>
+        </header>
+
+        <section class="preview-card" aria-label="Camera preview">
+            <video id="camera-preview" autoplay playsinline muted></video>
+            <div id="preview-placeholder" class="preview-placeholder">
+                <span class="camera-glyph">▣</span>
+                <strong>Ready for the cabin camera</strong>
+                <p>Park the Tesla, then tap Start Camera &amp; Mic and allow both permissions.</p>
+            </div>
+            <div class="preview-overlay">
+                <span id="live-badge" class="live-badge is-off">OFF</span>
+                <span id="video-details">No media active</span>
+            </div>
+        </section>
+
+        <section class="control-card primary-controls">
+            <button id="start-button" class="primary-button" type="button">Start Camera &amp; Mic</button>
+            <button id="camera-button" class="control-button" type="button" disabled>Camera On</button>
+            <button id="mic-button" class="control-button" type="button" disabled>Mic On</button>
+            <button id="switch-button" class="control-button" type="button" disabled>Switch Camera</button>
+        </section>
+
+        <section class="control-card meter-card">
+            <div class="meter-heading"><strong>Microphone level</strong><output id="mic-level">0%</output></div>
+            <div class="meter-track" role="meter" aria-label="Microphone input level" aria-valuemin="0" aria-valuemax="100">
+                <div id="meter-fill" class="meter-fill"></div>
+            </div>
+        </section>
+
+        <details class="control-card device-card">
+            <summary>Camera &amp; microphone selection</summary>
+            <div class="device-grid">
+                <label>Camera<select id="camera-select"><option value="">Default camera</option></select></label>
+                <label>Microphone<select id="mic-select"><option value="">Default microphone</option></select></label>
+                <button id="apply-devices-button" class="control-button" type="button">Apply devices</button>
+                <label class="mirror-control"><input id="mirror-toggle" type="checkbox" checked> Mirror preview</label>
+            </div>
+        </details>
+
+        <section class="control-card recording-card">
+            <div><strong>Local recording</strong><small>Kept in this browser only. Nothing is uploaded.</small></div>
+            <button id="record-button" class="record-button" type="button" disabled>Start Recording</button>
+            <button id="stop-record-button" class="control-button" type="button" disabled>Stop</button>
+            <span id="record-time" class="record-time">00:00</span>
+        </section>
+
+        <section id="clip-card" class="control-card clip-card" hidden>
+            <video id="clip-preview" controls playsinline></video>
+            <div class="clip-actions">
+                <a id="download-link" class="control-button link-button" download="tesla-camera.webm">Save recording</a>
+                <button id="discard-button" class="control-button" type="button">Discard</button>
+            </div>
+        </section>
+
+        <section class="status-card" aria-live="polite">
+            <strong id="status-title">Ready</strong>
+            <p id="status-message">Camera is available only while the Tesla is parked. Microphone and camera require separate browser permission.</p>
+        </section>
+    </main>
+</body>
+</html>

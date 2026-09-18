@@ -1,0 +1,52 @@
+[package]
+name = "web-server"
+version.workspace = true
+edition = "2024"
+license = { workspace = true }
+
+[dependencies]
+moonlight-common = { workspace = true, features = ["high", "backend_reqwest"] }
+common = { path = "../common" }
+
+tokio = { workspace = true, features = ["fs", "macros", "time"] }
+
+actix-web = { workspace = true, features = ["openssl"] }
+openssl = { workspace = true }
+actix-files = { workspace = true }
+actix-ws = { workspace = true }
+
+log = { workspace = true }
+simplelog = { workspace = true }
+
+anyhow = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true, features = ["json", "rustls-tls"] }
+pem = { workspace = true }
+
+slab = { workspace = true }
+async-stream = { workspace = true }
+futures = { workspace = true }
+
+totp-rs = { workspace = true }
+data-encoding = { workspace = true }
+hex = { workspace = true }
+
+# Windows system tray + startup
+[target.'cfg(windows)'.dependencies]
+tray-icon = "0.19"
+winreg = "0.55"
+windows = { version = "0.61", features = [
+    "Win32_System_Console",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Foundation",
+] }
+muda = "0.16"
+
+# build.rs needs winresource unconditionally (cross-compile from Linux targets Windows)
+[build-dependencies]
+winresource = "0.1"
+
+[lints]
+workspace = true

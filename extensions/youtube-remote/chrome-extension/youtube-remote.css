@@ -1,0 +1,180 @@
+:root {
+  --cockpit-touch-size: 64px;
+  --cockpit-gap: 18px;
+}
+
+html {
+  /* Controller focus must settle before the next key event. A global smooth
+     scroll left the DOM moving after selection and made one press feel lost. */
+  scroll-behavior: auto !important;
+}
+
+html.cockpit-youtube-focus-zoom,
+html.cockpit-youtube-focus-zoom body {
+  overflow-x: clip !important;
+}
+
+/* Keep YouTube's own responsive layout as the base. Focus zoom below is the
+   only visual change applied to the site itself. */
+
+#cockpit-youtube-rail {
+  /* Controls now live in Moonlight's local left sidebar. Keep the injected
+     element for old-session/exit compatibility, but do not draw a second rail
+     inside the streamed desktop. */
+  display: none !important;
+  position: fixed;
+  z-index: 2147483647;
+  right: 10px;
+  top: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transform: translateY(-50%);
+  padding: 10px;
+  border-radius: 24px;
+  background: rgba(12, 12, 12, 0.9);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  touch-action: manipulation;
+}
+
+body.cockpit-youtube-remote [data-cockpit-selected="true"] {
+  /* Never change the selected link's positioning mode. Search thumbnails use
+     an absolutely positioned anchor; forcing it to relative inserts a second
+     thumbnail-height box into normal flow and doubles the result row. The
+     outer card/wrappers below own the stacking order instead. */
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+body.cockpit-youtube-remote [data-cockpit-selected="true"]:focus,
+body.cockpit-youtube-remote [data-cockpit-selected="true"]:focus-visible,
+body.cockpit-youtube-remote [data-cockpit-selected="true"] *:focus,
+body.cockpit-youtube-remote [data-cockpit-selected="true"] *:focus-visible {
+  outline: none !important;
+}
+
+/* Lift the card's outer YouTube wrappers too. A large z-index on the inner
+   anchor alone cannot escape a lower sibling stacking context. */
+html.cockpit-youtube-focus-zoom ytd-rich-grid-row:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-rich-item-renderer:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-item-section-renderer:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-video-renderer:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-compact-video-renderer:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom #related:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-watch-next-secondary-results-renderer:has([data-cockpit-selected="true"]) {
+  position: relative !important;
+  z-index: 2147482000 !important;
+  overflow: visible !important;
+}
+
+/* Search has additional clipping/stacking wrappers. Lift those only while a
+   result is selected, and keep YouTube's mini guide below the focused card. */
+html.cockpit-youtube-focus-zoom ytd-page-manager:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-search:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-two-column-search-results-renderer:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-section-list-renderer:has([data-cockpit-selected="true"]) {
+  position: relative !important;
+  z-index: 2147481000 !important;
+  overflow: visible !important;
+}
+
+html.cockpit-youtube-focus-zoom ytd-app:has([data-cockpit-selected="true"]) ytd-mini-guide-renderer {
+  z-index: 0 !important;
+}
+
+/* Focus zoom leaves YouTube's native responsive layout untouched. The whole
+   card (poster, title, channel and description) grows around its original
+   centre without reflowing the grid. */
+html.cockpit-youtube-focus-zoom ytd-rich-item-renderer,
+html.cockpit-youtube-focus-zoom ytd-video-renderer,
+html.cockpit-youtube-focus-zoom ytd-compact-video-renderer,
+html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model.shortsLockupViewModelHost,
+html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media,
+html.cockpit-youtube-focus-zoom .ytLockupViewModelHost {
+  position: relative !important;
+  overflow: visible !important;
+  transform-origin: var(--cockpit-zoom-origin-x, center) var(--cockpit-zoom-origin-y, center) !important;
+  transition: transform 140ms ease-out, filter 140ms ease-out, box-shadow 140ms ease-out !important;
+  will-change: transform !important;
+}
+
+/* Geometry used by remote arrow navigation must ignore the visual zoom. */
+html.cockpit-youtube-measuring ytd-rich-item-renderer,
+html.cockpit-youtube-measuring ytd-video-renderer,
+html.cockpit-youtube-measuring ytd-compact-video-renderer,
+html.cockpit-youtube-measuring ytm-shorts-lockup-view-model.shortsLockupViewModelHost,
+html.cockpit-youtube-measuring ytd-rich-grid-slim-media,
+html.cockpit-youtube-measuring .ytLockupViewModelHost {
+  transform: none !important;
+  transition: none !important;
+}
+
+html.cockpit-youtube-focus-zoom ytd-rich-item-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost, ytm-shorts-lockup-view-model.shortsLockupViewModelHost)):hover,
+html.cockpit-youtube-focus-zoom ytd-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):hover,
+html.cockpit-youtube-focus-zoom ytd-compact-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):hover,
+html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model.shortsLockupViewModelHost[data-cockpit-zoom-positioned="true"]:hover,
+html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media[data-cockpit-zoom-positioned="true"]:hover,
+html.cockpit-youtube-focus-zoom .ytLockupViewModelHost[data-cockpit-zoom-positioned="true"]:hover,
+html.cockpit-youtube-focus-zoom ytd-rich-item-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost, ytm-shorts-lockup-view-model.shortsLockupViewModelHost)):has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-compact-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model.shortsLockupViewModelHost[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]),
+html.cockpit-youtube-focus-zoom .ytLockupViewModelHost[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]) {
+  z-index: 2147483000 !important;
+  transform: translate3d(var(--cockpit-zoom-shift-x, 0px), 0, 0) scale(var(--cockpit-zoom-scale, 1.5)) !important;
+  filter: brightness(1.07) saturate(1.06) !important;
+  border-radius: 14px !important;
+  background: var(--yt-spec-base-background, #0f0f0f) !important;
+  box-shadow: 0 18px 52px rgba(0, 0, 0, .58) !important;
+}
+
+/* This deliberately comes after the hover/selected transform and carries
+   higher specificity. Tesla can leave :hover latched after a touch, so a
+   weaker measurement rule would still return the enlarged rectangle. */
+html.cockpit-youtube-measuring.cockpit-youtube-focus-zoom body.cockpit-youtube-remote [data-cockpit-zoom-positioned="true"][data-cockpit-zoom-positioned="true"] {
+  transform: none !important;
+  transition: none !important;
+}
+
+/* Suggestions live against the right edge on a watch page. Anchoring their
+   scale to the right grows the preview left into the video/comments column,
+   where there is useful viewing room, rather than clipping it off-screen. */
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-related="true"] {
+  transform-origin: right center !important;
+}
+
+#cockpit-youtube-rail button {
+  width: var(--cockpit-touch-size);
+  height: var(--cockpit-touch-size);
+  min-width: var(--cockpit-touch-size);
+  min-height: var(--cockpit-touch-size);
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 18px;
+  color: white;
+  background: rgba(255, 255, 255, 0.12);
+  font: 700 28px/1 system-ui, sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#cockpit-youtube-rail button:hover,
+#cockpit-youtube-rail button:active,
+#cockpit-youtube-rail button:focus-visible {
+  background: #ff0033;
+  outline: none;
+}
+
+#cockpit-youtube-rail.cockpit-collapsed button:not([data-action="collapse"]) {
+  display: none;
+}
+
+#cockpit-youtube-rail.cockpit-collapsed button[data-action="collapse"] {
+  transform: rotate(180deg);
+}

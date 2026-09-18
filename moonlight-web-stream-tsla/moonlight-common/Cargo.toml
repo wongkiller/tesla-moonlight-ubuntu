@@ -1,0 +1,79 @@
+[package]
+name = "moonlight-common"
+version.workspace = true
+edition = "2024"
+license = { workspace = true }
+
+[dependencies]
+bitflags = "2.9.1"
+num = { workspace = true }
+num-derive = { workspace = true }
+num-traits = { workspace = true }
+
+log = { workspace = true, optional = true }
+
+thiserror = { workspace = true }
+
+# Stream
+moonlight-common-sys = { workspace = true, optional = true }
+printf-compat = { workspace = true, optional = true }
+
+# Network
+uuid = { workspace = true, features = ["v4"], optional = true }
+hex = { workspace = true }
+url = { workspace = true, optional = true }
+roxmltree = { workspace = true, optional = true }
+form_urlencoded = { workspace = true, optional = true }
+
+# Network Reqwest backend
+reqwest = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+tokio-openssl = { workspace = true, optional = true }
+
+# High
+tokio = { workspace = true, features = [
+    "io-util",
+    "net",
+    "rt",
+    "rt-multi-thread",
+    "time",
+], optional = true }
+pem = { workspace = true, optional = true }
+openssl = { workspace = true }
+
+# Serde Serialization
+serde = { workspace = true, optional = true }
+
+[features]
+default = ["high", "stream", "backend_reqwest"]
+
+# High level api
+high = ["network", "pair", "dep:log", "dep:tokio"]
+
+# Moonlight Common C / Stream
+stream = ["dep:moonlight-common-sys", "dep:log", "dep:printf-compat"]
+
+# Pairing
+pair = ["network"]
+
+# Network
+network = [
+    "dep:url",
+    "dep:form_urlencoded",
+    "dep:roxmltree",
+    "dep:uuid",
+
+    "dep:pem",
+]
+# Reqwest Network Backend
+backend_reqwest = [
+    "dep:reqwest",
+    "dep:tokio",
+    "dep:tokio-openssl",
+    "dep:bytes",
+]
+
+serde = ["dep:serde"]
+
+[lints]
+workspace = true

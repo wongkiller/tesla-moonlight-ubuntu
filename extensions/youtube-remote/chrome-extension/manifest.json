@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Cockpit YouTube Remote",
+  "version": "0.2.0",
+  "description": "Touch-friendly controls and layout for YouTube when streamed to a Tesla browser.",
+  "content_scripts": [
+    {
+      "matches": ["https://www.youtube.com/*"],
+      "css": ["youtube-remote.css"],
+      "js": ["youtube-remote.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

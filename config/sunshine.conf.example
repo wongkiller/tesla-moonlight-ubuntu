@@ -1,0 +1,4 @@
+# Sunshine automatically selects the available capture and hardware encoder.
+# Choose the display/audio device in https://localhost:47990 if necessary.
+min_log_level = 1
+upnp = disabled

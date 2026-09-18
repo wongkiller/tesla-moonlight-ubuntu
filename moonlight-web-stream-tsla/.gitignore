@@ -1,0 +1,9 @@
+# Rust
+/target
+finalOutput
+ignore
+
+# VsCode
+.vscode
+
+.github

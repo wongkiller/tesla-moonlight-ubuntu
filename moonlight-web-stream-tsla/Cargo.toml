@@ -1,0 +1,96 @@
+[workspace]
+resolver = "3"
+members = [
+    "moonlight-client-simple",
+    "moonlight-common",
+    "moonlight-common-sys",
+    "moonlight-web/common",
+    "moonlight-web/streamer",
+    "moonlight-web/web-server",
+]
+default-members = ["moonlight-web/streamer", "moonlight-web/web-server"]
+
+[workspace.package]
+version = "0.1.0"
+license = "GPL-3.0-or-later"
+
+[workspace.dependencies]
+moonlight-common = { path = "./moonlight-common", default-features = false }
+moonlight-common-sys = { path = "./moonlight-common-sys", features = [
+    "generate-bindings",
+] }
+
+# Log
+# release_max_level_info compiles debug!/trace! away in release builds across
+# the whole dependency graph (incl. webrtc-rs hot paths); the runtime filter
+# is already Info in both binaries, so behavior is unchanged.
+log = { version = "0.4.28", features = ["release_max_level_info"] }
+simplelog = "0.12.2"
+printf-compat = { version = "0.2.1" }
+
+# Util
+slab = "0.4.10"
+ts-rs = "11.0.1"
+
+# Async
+tokio = { version = "1.47.1" }
+tokio-openssl = "0.6.5"
+async-stream = "0.3.6"
+futures = "0.3.31"
+bytes = "1.10.1"
+
+# Http / Https
+reqwest = { version = "0.12.23", default-features = false }
+uuid = { version = "1.17.0" }
+hex = { version = "0.4.3" }
+url = { version = "2.5.4" }
+roxmltree = { version = "0.20.0" }
+form_urlencoded = { version = "1.2.1" }
+
+# WebRTC
+webrtc = "0.14.0"
+
+# Actix
+actix-web = { version = "4.11.0" }
+actix-files = "0.6.6"
+actix-ws = "0.3.0"
+
+# OpenSSL / Crypto
+openssl = "0.10.73"
+openssl-sys = "0.9.109"
+pem = "3.0.5"
+
+# TOTP / 2FA
+totp-rs = "5"
+data-encoding = "2"
+
+# Serialization
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.142"
+
+# Error
+anyhow = "1.0.99"
+thiserror = "2.0.16"
+
+# Numbers
+num = "0.4"
+num-derive = "0.4"
+num-traits = "0.2"
+
+# Sys
+bindgen = { version = "0.72.0" }
+cmake = { version = "0.1.54" }
+
+[workspace.lints.clippy]
+too_many_arguments = "allow"
+unwrap_used = "warn"
+
+# Profile settings only take effect at the workspace root. The streamer's
+# per-RTP-packet path (packetize -> SRTP -> socket) spans several crates, so
+# LTO + a single codegen unit matter more here than usual.
+# panic stays "unwind": actix isolates per-request panics in the web-server,
+# and the streamer already aborts via its own panic hook.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
