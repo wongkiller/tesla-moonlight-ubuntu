@@ -23,10 +23,11 @@ SUNSHINE_CONTAINER_NAME=sunshine-03 SUNSHINE_WEB_PORT=43881 \
 docker compose -f docker-compose.casaos.yml up -d
 ```
 
-The supplied Compose file gives Chrome a 1 GiB `/dev/shm`. The installer also
-starts Chrome with `--disable-dev-shm-usage`, so a manually-created CasaOS
-container with Docker's 64 MiB default does not crash when YouTube changes
-pages or starts a video.
+The supplied Compose file gives Chrome a 1 GiB RAM-backed `/dev/shm`. The
+launcher uses that fast path whenever `/dev/shm` is at least 256 MiB. It adds
+`--disable-dev-shm-usage` only as an automatic fallback for manually-created
+containers left at Docker's 64 MiB default, which can otherwise crash when
+YouTube changes pages or starts a video.
 
 In CasaOS or Portainer, the same file can be pasted into the Compose/Stack web
 editor. Keep **Privileged mode disabled** and do not add a volume if you want the
