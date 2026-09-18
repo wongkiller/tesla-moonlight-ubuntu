@@ -34,7 +34,9 @@ def main(action):
     if action == 'launch':
         cancel_cleanup()
         if container:
-            subprocess.run([*manager, 'start', 'youtube-browser'], check=True)
+            status = subprocess.run([*manager, 'status', 'youtube-browser'], capture_output=True, text=True)
+            if 'RUNNING' not in status.stdout:
+                subprocess.run([*manager, 'start', 'youtube-browser'], check=True)
         else:
             subprocess.run(['systemctl', '--user', 'start', 'tesla-youtube-control', 'tesla-youtube-browser'], check=True)
         for _ in range(60):

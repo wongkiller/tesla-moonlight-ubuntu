@@ -170,6 +170,7 @@ stdout_logfile_backups=2
 redirect_stderr=true
 '''
     write_private(Path('/etc/tesla-moonlight-ubuntu/supervisord.conf'), supervisor, 0o644)
+    Path('/etc/tesla-moonlight-ubuntu').chmod(0o755)
     print('Configured private desktop, Sunshine, Chrome, web bridge, automatic pairing and optional Tunnel.')
 
 

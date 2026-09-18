@@ -1,5 +1,10 @@
 # Source and licensing
 
+Additional Docker file: `config/docker/chrome-seccomp.json` comes from Microsoft
+Playwright's `utils/docker/seccomp_profile.json` (downloaded 2026-09-18), Apache-2.0.
+The license is retained at `config/docker/PLAYWRIGHT-LICENSE`.
+Source: https://github.com/microsoft/playwright/blob/main/utils/docker/seccomp_profile.json
+
 This Ubuntu port imports the complete streaming source from:
 
 - Repository: https://github.com/wongkiller/tesla-moonlight-mac

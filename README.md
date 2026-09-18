@@ -20,6 +20,56 @@ Cloudflare Tunnel publishes the page and signaling; **TURN is separately needed
 for media across the internet** in this deployment. Both ends make outbound
 connections; this design does not require router port forwarding.
 
+## One-command Ubuntu 26.04 Docker setup
+
+The container edition installs its own X11 desktop, audio, Sunshine, Chrome,
+YouTube Remote, web bridge and cloudflared. No manual Sunshine pairing, desktop
+configuration or service creation is needed. Services run as the unprivileged
+`sunshine` user under Supervisor; Docker does not need systemd or a mounted GPU.
+
+On Windows with Docker Desktop running Linux containers:
+
+```powershell
+git clone https://github.com/wongkiller/tesla-moonlight-ubuntu.git
+cd tesla-moonlight-ubuntu
+.\scripts\create-sunshine-container.ps1
+```
+
+This creates **sunshine-01** from official `ubuntu:26.04`, installs Git **inside
+the container**, clones this repository there and starts the unattended installer.
+Fill **`/opt/tesla-moonlight-ubuntu/config/internet.json`** using Docker Desktop's
+Files editor, or:
+
+```powershell
+docker exec -it sunshine-01 nano /opt/tesla-moonlight-ubuntu/config/internet.json
+docker logs -f sunshine-01
+```
+
+The file is created automatically from `config/internet.example.json` and is
+**gitignored**. Keep your real tokens out of the example file. Dependencies build
+while you fill it; once valid, configuration and service startup continue
+automatically. Public access uses the configured hostname. The local page is
+`http://localhost:43880` (loopback only); Sunshine admin/debug ports are not
+published. Select **Ubuntu 26.04 Docker Desktop → YouTube Remote** or Desktop.
+
+Already inside a fresh Ubuntu 26.04 amd64 container? Install Git if necessary,
+clone, and use the same repository entry point as root:
+
+```bash
+apt-get update && apt-get install -y git ca-certificates
+git clone https://github.com/wongkiller/tesla-moonlight-ubuntu.git
+cd tesla-moonlight-ubuntu
+# Starts dependency setup, creates config/internet.json, waits for your values,
+# configures everything and stays in the foreground as the service supervisor.
+bash scripts/container-entrypoint.sh
+```
+
+Use that entry point as the container's startup command for automatic restart.
+The Windows creation script already does this. See [Docker setup and recovery](docs/DOCKER.md)
+for config fields, persistent storage and the Cloudflare permissions needed for
+automatic DNS/hostname setup. A CPU-rendered Docker desktop is functional but is
+not a substitute for native GPU game streaming.
+
 ## Build
 
 Run inside Ubuntu as your normal user, not root:
