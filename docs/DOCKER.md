@@ -32,10 +32,10 @@ requests between them. Use a separate Tunnel or stop the old connector.
 ## What happens automatically
 
 1. Check Ubuntu version and container environment, create the private template.
-2. Report missing apt packages; install desktop, audio, Node, build tools,
+2. Report missing apt packages; install desktop, audio, Node,
    Supervisor, official Sunshine and cloudflared packages, and official Chrome.
-3. Verify the existing runtime or build the locked Rust/TypeScript source and run
-   its tests. Failed commands stop with a log path; rerunning preserves data.
+3. Download the pinned Ubuntu runtime and check archive/file hashes. No compiler
+   or tests are required. Failed commands stop with a log path; rerunning preserves data.
 4. Start rootless Xorg dummy, private PulseAudio and D-Bus, XFCE and software
    Sunshine. Generate private Sunshine credentials; preserve existing pairings.
 5. Configure YouTube Remote, dynamic Window/Full/Auto modes and web controls.
@@ -43,9 +43,8 @@ requests between them. Use a separate Tunnel or stop the old connector.
 7. Check that the public hostname reaches this specific container; report a
    route/DNS/old-connector problem if it does not.
 
-All installation commands are in version-controlled scripts. If testing reveals
-a missing package or configuration, fix the script and rerun it. Do not repair a
-container with undocumented manual install commands.
+All installation commands are in version-controlled scripts. No ChatGPT session,
+manual service setup or test workflow is required.
 
 ## Logs and recovery
 
@@ -53,7 +52,6 @@ container with undocumented manual install commands.
 docker logs --tail 60 sunshine-01
 docker exec sunshine-01 supervisorctl -c /etc/tesla-moonlight-ubuntu/supervisord.conf status
 docker exec sunshine-01 tail -n 60 /var/log/tesla-moonlight-ubuntu/install.log
-docker exec sunshine-01 tail -n 60 /home/sunshine/.local/share/tesla-moonlight-ubuntu/logs/ready.log
 ```
 
 After editing the config on an already running installation, restart the

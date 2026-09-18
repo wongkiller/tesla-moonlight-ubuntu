@@ -20,7 +20,29 @@ Cloudflare Tunnel publishes the page and signaling; **TURN is separately needed
 for media across the internet** in this deployment. Both ends make outbound
 connections; this design does not require router port forwarding.
 
-## One-command Ubuntu 26.04 Docker setup
+## Install: clone, fill config, run
+
+Inside a clean Ubuntu 26.04 amd64 container, run as root:
+
+```bash
+apt-get update && apt-get install -y git ca-certificates
+git clone https://github.com/wongkiller/tesla-moonlight-ubuntu.git
+cd tesla-moonlight-ubuntu
+cp config/internet.example.json config/internet.json
+# Fill config/internet.json with your hostname, password and Cloudflare values.
+bash install.sh --auto
+```
+
+The installer installs the dependencies, downloads the checksum-verified runtime,
+configures the desktop, Sunshine and Chrome, pairs the host, and starts services.
+It does **not** run tests or require ChatGPT. It stays in the foreground as the
+service supervisor. Your private config is gitignored.
+
+For Docker, the container must support Chrome's sandbox namespaces; the creation
+script below supplies that setting and persistent volumes automatically. Docker
+startup settings cannot be changed from inside an existing container.
+
+## Create the Ubuntu container on Windows
 
 The container edition installs its own X11 desktop, audio, Sunshine, Chrome,
 YouTube Remote, web bridge and cloudflared. No manual Sunshine pairing, desktop
@@ -46,7 +68,7 @@ docker logs -f sunshine-01
 ```
 
 The file is created automatically from `config/internet.example.json` and is
-**gitignored**. Keep your real tokens out of the example file. Dependencies build
+**gitignored**. Keep your real tokens out of the example file. Dependencies install
 while you fill it; once valid, configuration and service startup continue
 automatically. Public access uses the configured hostname. The local page is
 `http://localhost:43880` (loopback only); Sunshine admin/debug ports are not
@@ -61,7 +83,7 @@ git clone https://github.com/wongkiller/tesla-moonlight-ubuntu.git
 cd tesla-moonlight-ubuntu
 # Starts dependency setup, creates config/internet.json, waits for your values,
 # configures everything and stays in the foreground as the service supervisor.
-bash scripts/container-entrypoint.sh
+bash install.sh --auto
 ```
 
 Use that entry point as the container's startup command for automatic restart.

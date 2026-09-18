@@ -34,8 +34,7 @@ trap 'failed "$?" "$LINENO"' ERR
 export DEBIAN_FRONTEND=noninteractive
 packages=(python3 git ca-certificates curl sudo supervisor dbus-x11 pulseaudio pulseaudio-utils libcap2-bin
   xauth x11-utils x11-xserver-utils xserver-xorg-core xserver-xorg-video-dummy
-  xfwm4 xfce4-panel xfdesktop4 xfce4-terminal fonts-dejavu-core fonts-noto-cjk
-  build-essential cmake clang libclang-dev libssl-dev pkg-config perl nodejs npm rustup jq shellcheck)
+  xfwm4 xfce4-panel xfdesktop4 xfce4-terminal fonts-dejavu-core fonts-noto-cjk nodejs jq)
 missing=()
 for package in "${packages[@]}"; do
   [[ $(dpkg-query -W -f='${Status}' "$package" 2>/dev/null || true) == 'install ok installed' ]] || missing+=("$package")
@@ -72,12 +71,15 @@ fi
 if ! id sunshine >/dev/null 2>&1; then useradd --create-home --shell /bin/bash sunshine; fi
 mkdir -p /home/sunshine
 chown sunshine:sunshine /home/sunshine
-if ! python3 "$root_dir/scripts/container-setup.py" verify-build >/dev/null 2>&1; then
-  echo 'Building Linux runtime from the cloned, locked source (including tests).'
-  rustup toolchain install nightly-2025-09-01 --profile minimal
-  bash "$root_dir/scripts/build-runtime.sh"
+if ! runuser -u sunshine -- unshare -Ur true 2>/dev/null; then
+  echo 'Chrome sandbox namespaces are blocked by the Docker host. Create the container with scripts/create-sunshine-container.ps1 (or the documented seccomp profile).'
+  exit 1
 fi
-if [[ $mode == --dependencies ]]; then echo 'System dependencies and tested runtime are ready.'; exit 0; fi
+if ! python3 "$root_dir/scripts/container-setup.py" verify-build >/dev/null 2>&1; then
+  echo 'Downloading the pinned Ubuntu runtime; no compiler or test run is needed.'
+  python3 "$root_dir/scripts/fetch-runtime.py"
+fi
+if [[ $mode == --dependencies ]]; then echo 'System dependencies and runtime are ready.'; exit 0; fi
 python3 "$root_dir/scripts/container-setup.py" install "$config"
 python3 "$root_dir/scripts/configure-container-route.py" "$config"
 echo 'Installed. Start with: bash scripts/container-entrypoint.sh'

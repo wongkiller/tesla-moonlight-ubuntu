@@ -43,7 +43,12 @@ def install(config_path):
     for name in ('server', 'run', 'logs'):
         (STATE / name).mkdir(exist_ok=True, mode=0o700)
     if (STATE / 'run/supervisor.sock').exists():
-        subprocess.run(['supervisorctl', '-c', '/etc/tesla-moonlight-ubuntu/supervisord.conf', 'stop', 'all'], check=True)
+        active = subprocess.run(['supervisorctl', '-c', '/etc/tesla-moonlight-ubuntu/supervisord.conf', 'pid'],
+                                capture_output=True, text=True)
+        if active.returncode == 0 and active.stdout.strip().isdigit():
+            raise ValueError('Services are already running. Restart the container to apply configuration changes.')
+        (STATE / 'run/supervisor.sock').unlink(missing_ok=True)
+        (STATE / 'run/supervisord.pid').unlink(missing_ok=True)
     for name in ('web-server', 'streamer'):
         temporary = STATE / (name + '.new')
         shutil.copy2(ROOT / 'build/runtime' / name, temporary)
@@ -164,8 +169,8 @@ startretries=5
 stopasgroup=true
 killasgroup=true
 stopwaitsecs=15
-stdout_logfile={STATE}/logs/{role}.log
-stdout_logfile_maxbytes=5MB
+stdout_logfile={'/dev/stdout' if role == 'ready' else str(STATE / 'logs' / (role + '.log'))}
+stdout_logfile_maxbytes={'0' if role == 'ready' else '5MB'}
 stdout_logfile_backups=2
 redirect_stderr=true
 '''
