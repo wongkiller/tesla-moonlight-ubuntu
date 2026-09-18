@@ -73,6 +73,12 @@ docker exec sunshine-01 git -C /opt/tesla-moonlight-ubuntu pull --ff-only
 docker restart sunshine-01
 ```
 
+The startup command enters `install.sh --auto` on every container start. This
+does not reinstall packages or redownload the pinned runtime when they are
+already present: it checks dependencies, validates the config, reapplies the
+generated configuration idempotently, and then starts Supervisor. The CasaOS
+Compose example also skips its initial `apt-get update` after Git exists.
+
 The default script creates two named volumes: `sunshine-01-data` (desktop,
 pairings and Chrome profile) and `sunshine-01-config` (private configuration
 backup). A valid config is copied into the private volume. A fresh clone restores
@@ -84,6 +90,10 @@ live in the container layer and can be reinstalled automatically on recreation.
 Do not publish 47990, 9227 or 9228. The provided script publishes only the
 authenticated web bridge on Windows loopback port 43880. Tunnel and TURN use
 outbound connections. Docker Desktop and the Windows computer must stay running.
+
+For a no-volume CasaOS deployment, see [CASAOS.md](CASAOS.md). Container restart
+preserves its writable layer, but removing or recreating that container also
+removes its private config and installed state.
 
 ## Browser sandbox
 

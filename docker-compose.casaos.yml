@@ -1,0 +1,29 @@
+services:
+  main_app:
+    image: ubuntu:26.04
+    container_name: ${SUNSHINE_CONTAINER_NAME:-sunshine-02}
+    command:
+      - /bin/bash
+      - -lc
+      - >-
+        set -e;
+        if ! command -v git >/dev/null 2>&1; then
+          apt-get update;
+          apt-get install -y --no-install-recommends git ca-certificates;
+        fi;
+        if [ ! -d /opt/tesla-moonlight-ubuntu/.git ]; then
+          git clone --depth 1 https://github.com/wongkiller/tesla-moonlight-ubuntu.git /opt/tesla-moonlight-ubuntu;
+        fi;
+        cd /opt/tesla-moonlight-ubuntu;
+        exec bash install.sh --auto
+    ports:
+      - "${SUNSHINE_WEB_PORT:-43880}:8080"
+    restart: unless-stopped
+    mem_limit: 8g
+    security_opt:
+      # CasaOS does not expose a custom seccomp-file field. This permits
+      # Chrome's user-namespace sandbox without enabling privileged mode.
+      - seccomp=unconfined
+    labels:
+      icon: https://icon.casaos.io/main/all/ubuntu.png
+

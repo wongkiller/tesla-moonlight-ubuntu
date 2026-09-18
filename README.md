@@ -92,6 +92,11 @@ for config fields, persistent storage and the Cloudflare permissions needed for
 automatic DNS/hostname setup. A CPU-rendered Docker desktop is functional but is
 not a substitute for native GPU game streaming.
 
+For CasaOS or a Linux Docker host without volumes, use
+[`docker-compose.casaos.yml`](docker-compose.casaos.yml) and the
+[CasaOS / Linux Docker guide](docs/CASAOS.md). It includes config-copy commands,
+restart behavior, logs, and the Chrome sandbox setting required by CasaOS.
+
 ## Build
 
 Run inside Ubuntu as your normal user, not root:
