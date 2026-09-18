@@ -224,8 +224,8 @@ def main(role):
         codec_guard = STATE / 'youtube-remote/codec-guard'
         version = subprocess.run(['google-chrome', '--version'], capture_output=True, text=True).stdout.strip()
         print(f'{datetime.now(timezone.utc).isoformat()} START {version}; '
-              f'profile=profile-v3; av1=blocked; disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
-        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v3'),
+              f'profile=profile-v4; youtube_codecs=h264-only; disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
+        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v4'),
             '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9227',
             '--remote-allow-origins=http://127.0.0.1:9227', '--ozone-platform=x11',
             '--app=https://www.youtube.com/', '--start-fullscreen', '--no-first-run',
