@@ -416,6 +416,8 @@ class ViewerApp implements Component {
 
         // Invalidate cached stream rect on resize
         window.addEventListener("resize", () => { this.cachedStreamRect = null })
+        window.addEventListener("scroll", () => { this.cachedStreamRect = null }, true)
+        this.videoElement.addEventListener("resize", () => { this.cachedStreamRect = null })
         // Also invalidate when the video element itself resizes (e.g. when the video
         // stream starts and its intrinsic dimensions become known, causing the element
         // to reflow from its initial min-width/min-height square into the correct ratio)
@@ -1550,8 +1552,8 @@ class ViewerApp implements Component {
         else {
             const clientRect = this.canvasElement.getBoundingClientRect()
             
-            const canvasCssWidth = this.canvasElement.clientWidth
-            const canvasCssHeight = this.canvasElement.clientHeight
+            const canvasCssWidth = clientRect.width
+            const canvasCssHeight = clientRect.height
 
             const boundingRectAspect = canvasCssWidth / canvasCssHeight
             let x = clientRect.x

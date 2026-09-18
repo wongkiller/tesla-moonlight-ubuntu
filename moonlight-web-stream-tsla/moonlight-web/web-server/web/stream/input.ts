@@ -173,6 +173,7 @@ export class StreamInput {
     private capabilities: StreamCapabilities = { touch: true }
     // Size of the streamer device
     private streamerSize: [number, number] = [0, 0]
+    private mouseRemainder: [number, number] = [0, 0]
 
     private keyboard: RTCDataChannel | null = null
     private mouseClicks: RTCDataChannel | null = null
@@ -351,6 +352,7 @@ export class StreamInput {
 
         this.capabilities = capabilities
         this.streamerSize = streamerSize
+        this.mouseRemainder = [0, 0]
         this.registerBufferedControllers()
     }
 
@@ -456,7 +458,9 @@ export class StreamInput {
             return
         }
 
-        if (this.config.mouseMode == "relative" || this.config.mouseMode == "follow") {
+        if (this.config.mouseMode == "follow") {
+            this.sendMousePositionClientCoordinates(event.clientX, event.clientY, rect, button)
+        } else if (this.config.mouseMode == "relative") {
             this.sendMouseButton(true, button)
         } else if (this.config.mouseMode == "pointAndDrag") {
             this.sendMousePositionClientCoordinates(event.clientX, event.clientY, rect, button)
@@ -496,16 +500,16 @@ export class StreamInput {
         trySendChannel(this.mouseRelative, this.buffer)
     }
     sendMouseMoveClientCoordinates(movementX: number, movementY: number, rect: DOMRect) {
-        // Use screen diagonal as reference for consistent mouse movement across orientations.
-        // Same physical drag distance = same mouse movement, whether phone is portrait or landscape.
-        // Diagonal is orientation-independent: portrait and landscape have similar diagonals
-        // even though their width/height ratios are opposite.
-        const screenDiagonal = Math.sqrt(rect.width * rect.width + rect.height * rect.height);
-        const SENSITIVITY_MULTIPLIER = 1.3; // Responsive dragging that works in both orientations
-        const scaledMovementX = (movementX / screenDiagonal) * this.streamerSize[0] * SENSITIVITY_MULTIPLIER;
-        const scaledMovementY = (movementY / screenDiagonal) * this.streamerSize[1] * SENSITIVITY_MULTIPLIER;
-
-        this.sendMouseMove(scaledMovementX, scaledMovementY)
+        if (rect.width <= 0 || rect.height <= 0) return
+        // Each axis follows its displayed size. A diagonal denominator slows
+        // vertical movement on widescreen video. Retain subpixel motion because
+        // the wire protocol only accepts integers.
+        const x = movementX * this.streamerSize[0] / rect.width + this.mouseRemainder[0]
+        const y = movementY * this.streamerSize[1] / rect.height + this.mouseRemainder[1]
+        const dx = Math.trunc(x)
+        const dy = Math.trunc(y)
+        this.mouseRemainder = [x - dx, y - dy]
+        if (dx || dy) this.sendMouseMove(dx, dy)
     }
     sendMousePosition(x: number, y: number, referenceWidth: number, referenceHeight: number) {
         this.buffer.reset()

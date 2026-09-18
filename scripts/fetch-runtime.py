@@ -9,9 +9,9 @@ import tempfile
 import urllib.request
 from setup import ROOT, verify_build
 
-URL = ('https://github.com/wongkiller/tesla-moonlight-ubuntu/releases/download/v0.2.0/'
-       'tesla-moonlight-ubuntu-0.2.0-ubuntu26.04-amd64.tar.gz')
-SHA256 = 'f09fb675567325b79d9b098e26887929cc3df58d87fdaf607648142e1ff165dc'
+URL = ('https://github.com/wongkiller/tesla-moonlight-ubuntu/releases/download/v0.2.1/'
+       'tesla-moonlight-ubuntu-0.2.1-ubuntu26.04-amd64.tar.gz')
+SHA256 = 'bfced21e017298111d2e66093ed16eb371d03c71ab6a955d3e7fa01e3bcf1297'
 PREFIX = 'tesla-moonlight-ubuntu/build/runtime/'
 
 

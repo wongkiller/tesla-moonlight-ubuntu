@@ -9,7 +9,8 @@ from setup import ROOT, verify_build
 
 def main():
     verify_build(ROOT / 'build/runtime')
-    output = ROOT / 'build/tesla-moonlight-ubuntu-0.2.0-ubuntu26.04-amd64.tar.gz'
+    version = (ROOT / 'FRONTEND_BUILD_VERSION').read_text().strip().removeprefix('ubuntu-')
+    output = ROOT / f'build/tesla-moonlight-ubuntu-{version}-ubuntu26.04-amd64.tar.gz'
     excluded = {'.git', 'node_modules', 'target', 'dist', '__pycache__'}
     files = [ROOT / name for name in ('README.md', 'LICENSE', 'UPSTREAM.md',
              'install.sh', 'FRONTEND_BUILD_VERSION', '.gitignore', '.gitattributes')]

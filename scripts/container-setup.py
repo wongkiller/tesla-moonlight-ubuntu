@@ -35,6 +35,18 @@ def install(config_path):
     settings = read_settings(config_path)
     verify_build(ROOT / 'build/runtime')
     os.umask(0o077)
+    # Container restarts may retain Xorg's lock with a reused PID. Probe the
+    # display socket rather than trusting that PID before removing stale files.
+    import socket
+    with socket.socket(socket.AF_UNIX) as probe:
+        probe.settimeout(2)
+        try:
+            probe.connect('/tmp/.X11-unix/X99')
+        except (FileNotFoundError, ConnectionRefusedError):
+            Path('/tmp/.X99-lock').unlink(missing_ok=True)
+            Path('/tmp/.X11-unix/X99').unlink(missing_ok=True)
+        else:
+            raise ValueError('Display :99 is already running; restart the container to apply changes.')
     account = pwd.getpwnam('sunshine')
     STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
     desktop = STATE / 'wsl-desktop'  # Shared layout with the tested WSL capture helper.

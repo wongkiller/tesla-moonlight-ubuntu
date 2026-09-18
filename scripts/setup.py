@@ -108,6 +108,8 @@ WantedBy=default.target
 
 def verify_build(build):
     manifest = json.loads((build / 'manifest.json').read_text())
+    if manifest.get('frontend') != (ROOT / 'FRONTEND_BUILD_VERSION').read_text().strip():
+        raise ValueError('Runtime version is outdated; download or build the current release')
     if manifest['architecture'] != platform.machine():
         raise ValueError('Build architecture does not match this machine; rebuild locally')
     files = manifest['sha256']
