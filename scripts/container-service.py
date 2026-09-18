@@ -18,6 +18,25 @@ import urllib.request
 
 STATE = Path.home() / '.local/share/tesla-moonlight-ubuntu'
 DESKTOP = STATE / 'wsl-desktop'
+CHROME_DISABLED_FEATURES = (
+    'OptGuideEnableXNNPACKDelegateWithTFLite',
+    'OptimizationGuideModelExecution',
+    'OptimizationGuideModelDownloading',
+    'OptimizationTargetPrediction',
+    'OptimizationHints',
+    'OptimizationHintsFetching',
+    'HistoryEmbeddings',
+    'HistoryEmbeddingsAnswers',
+    'HistoryEmbeddingsIntentClassifier',
+    'OmniboxHistoryEmbeddings',
+    'PageContentAnnotations',
+    'PageEntitiesPageContentAnnotations',
+    'PageVisibilityPageContentAnnotations',
+    'TextEmbeddingPageContentAnnotations',
+    'PageContentAnnotationsValidation',
+    'PageVisibilityBatchAnnotations',
+    'TextEmbeddingBatchAnnotations',
+)
 
 
 def health_logger():
@@ -200,16 +219,20 @@ def main(role):
         run('node', STATE / 'youtube-remote/exit-server.js', STATE / 'youtube-remote/control.token', STATE / 'youtube-remote/stop.sh')
     elif role == 'youtube-browser':
         wait_display()
-        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile'),
+        # A new profile generation discards cached Chrome ML models that can
+        # keep crashing after the responsible feature has been disabled.
+        version = subprocess.run(['google-chrome', '--version'], capture_output=True, text=True).stdout.strip()
+        print(f'{datetime.now(timezone.utc).isoformat()} START {version}; '
+              f'profile=profile-v2; disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
+        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v2'),
             '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9227',
             '--remote-allow-origins=http://127.0.0.1:9227', '--ozone-platform=x11',
             '--app=https://www.youtube.com/', '--start-fullscreen', '--no-first-run',
             '--no-default-browser-check', '--disable-session-crashed-bubble', '--disable-background-mode',
             '--force-device-scale-factor=1.25', '--disable-gpu', '--disable-quic',
-            # Chrome 153's CPU optimization-guide model can select an XNNPACK
-            # instruction path that crashes the YouTube renderer with SIGILL on
-            # older AMD hosts. Video playback does not depend on this model.
-            '--disable-features=OptGuideEnableXNNPACKDelegateWithTFLite,OptimizationGuideModelExecution')
+            # Chrome's local ML helpers are unrelated to YouTube playback. On
+            # older AMD hosts their TFLite/XNNPACK path can crash the renderer.
+            '--disable-features=' + ','.join(CHROME_DISABLED_FEATURES))
     elif role == 'tunnel':
         wait_url('http://127.0.0.1:8080/')
         run('cloudflared', 'tunnel', '--no-autoupdate', 'run', '--token-file', STATE / 'server/tunnel.token')
