@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 root_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
-config=${TESLA_CONFIG:-$HOME/.config/tesla-moonlight-ubuntu/internet.json}
+config=${TESLA_CONFIG:-$root_dir/config/internet.json}
 bash "$root_dir/scripts/bootstrap.sh" --prepare
-while ! command -v python3 >/dev/null; do
-  apt-get -o Acquire::Retries=3 update && apt-get -o Acquire::Retries=3 install -y python3 && break
+while ! command -v python3 >/dev/null || ! command -v nano >/dev/null; do
+  apt-get -o Acquire::Retries=3 update && DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::Retries=3 install -y python3 nano && break
   echo 'Initial dependency download failed; retrying in 30 seconds.'
   sleep 30
 done

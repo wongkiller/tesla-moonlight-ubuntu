@@ -18,5 +18,5 @@ exec bash /opt/tesla-moonlight-ubuntu/scripts/container-entrypoint.sh
   -p "127.0.0.1:${LocalPort}:8080" ubuntu:26.04 bash -lc $command
 if ($LASTEXITCODE -ne 0) { throw 'Docker creation failed' }
 Write-Host "Created $Name. Follow startup: docker logs -f $Name"
-Write-Host 'Fill /root/.config/tesla-moonlight-ubuntu/internet.json inside the container; installation then continues automatically.'
+Write-Host 'Fill /opt/tesla-moonlight-ubuntu/config/internet.json inside the container; installation then continues automatically.'
 Write-Host "Local page after installation: http://localhost:$LocalPort"

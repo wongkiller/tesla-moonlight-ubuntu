@@ -117,7 +117,7 @@ Categories=Settings;Network;
     existing = json.loads(previous.read_text()) if previous.exists() else None
     write_private(previous, json.dumps(render_config(settings, STATE, existing), indent=2))
     # Worker reads secrets directly; neither command lines nor Supervisor files contain them.
-    write_private(STATE / 'server/deployment.json', json.dumps(settings))
+    write_private(STATE / 'server/deployment.json', json.dumps({k: v for k, v in settings.items() if k in BASE_KEYS}))
     if settings.get('cloudflare_tunnel_token'):
         write_private(STATE / 'server/tunnel.token', settings['cloudflare_tunnel_token'])
     if not (STATE / 'server/instance-id').exists():

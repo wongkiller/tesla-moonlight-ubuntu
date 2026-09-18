@@ -8,11 +8,15 @@ root_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
 source /etc/os-release
 [[ $ID == ubuntu && $VERSION_ID == 26.04 ]] || { echo 'Ubuntu 26.04 is required.' >&2; exit 1; }
 [[ -f /.dockerenv || -f /run/.containerenv ]] || { echo 'Use this bootstrap inside an Ubuntu container. Native/WSL installation: see install.sh.' >&2; exit 1; }
-config=${TESLA_CONFIG:-$HOME/.config/tesla-moonlight-ubuntu/internet.json}
+config=${TESLA_CONFIG:-$root_dir/config/internet.json}
 mode=${1:---install}
 mkdir -p "$(dirname -- "$config")" /var/log/tesla-moonlight-ubuntu
 if [[ ! -f $config ]]; then
-  cp "$root_dir/config/internet.example.json" "$config"
+  if [[ -f /root/.config/tesla-moonlight-ubuntu/internet.json ]]; then
+    cp /root/.config/tesla-moonlight-ubuntu/internet.json "$config"
+  else
+    cp "$root_dir/config/internet.example.json" "$config"
+  fi
   chmod 600 "$config"
 fi
 if [[ $mode == --prepare ]]; then echo "Fill in $config, then run: bash scripts/bootstrap.sh"; exit 0; fi
@@ -39,6 +43,10 @@ if ((${#missing[@]})); then
   apt-get -o Acquire::Retries=3 install -y --no-install-recommends "${missing[@]}"
 fi
 python3 "$root_dir/scripts/container-setup.py" validate "$config"
+mkdir -p /root/.config/tesla-moonlight-ubuntu
+if [[ $(realpath "$config") != /root/.config/tesla-moonlight-ubuntu/internet.json ]]; then
+  install -m 600 "$config" /root/.config/tesla-moonlight-ubuntu/internet.json
+fi
 for component in sunshine cloudflared; do
   if ! command -v "$component" >/dev/null; then
     python3 "$root_dir/scripts/install-host-package.py" "$component"
@@ -65,4 +73,5 @@ if ! python3 "$root_dir/scripts/container-setup.py" verify-build >/dev/null 2>&1
   bash "$root_dir/scripts/build-runtime.sh"
 fi
 python3 "$root_dir/scripts/container-setup.py" install "$config"
+python3 "$root_dir/scripts/configure-container-route.py" "$config"
 echo 'Installed. Start with: bash scripts/container-entrypoint.sh'
