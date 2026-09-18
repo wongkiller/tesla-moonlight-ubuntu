@@ -130,7 +130,9 @@ Categories=Settings;Network;
     for parent, dirs, files in os.walk(HOME):
         os.chown(parent, account.pw_uid, account.pw_gid)
         for name in dirs + files:
-            os.chown(Path(parent) / name, account.pw_uid, account.pw_gid)
+            # Chrome Singleton* entries are symlinks to ephemeral sockets/cookies.
+            # Own the link itself, never follow it into /tmp or another directory.
+            os.chown(Path(parent) / name, account.pw_uid, account.pw_gid, follow_symlinks=False)
     if not (desktop / 'config/sunshine/sunshine_state.json').exists():
         saved = json.loads(credentials.read_text())
         subprocess.run(['runuser', '-u', 'sunshine', '--', 'env', f'XDG_CONFIG_HOME={desktop}/config',
