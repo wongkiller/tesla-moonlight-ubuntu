@@ -19,6 +19,8 @@ services:
     ports:
       - "${SUNSHINE_WEB_PORT:-43880}:8080"
     restart: unless-stopped
+    init: true
+    shm_size: 1gb
     mem_limit: 8g
     security_opt:
       # CasaOS does not expose a custom seccomp-file field. This permits
@@ -26,4 +28,3 @@ services:
       - seccomp=unconfined
     labels:
       icon: https://icon.casaos.io/main/all/ubuntu.png
-
