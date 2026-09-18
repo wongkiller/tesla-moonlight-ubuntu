@@ -52,7 +52,17 @@ manual service setup or test workflow is required.
 docker logs --tail 60 sunshine-01
 docker exec sunshine-01 supervisorctl -c /etc/tesla-moonlight-ubuntu/supervisord.conf status
 docker exec sunshine-01 tail -n 60 /var/log/tesla-moonlight-ubuntu/install.log
+docker exec sunshine-01 tail -n 60 /home/sunshine/.local/share/tesla-moonlight-ubuntu/logs/ready.log
+docker exec sunshine-01 cat /home/sunshine/.local/share/tesla-moonlight-ubuntu/server/health-status.json
 ```
+
+`ready.log` is timestamped and rotated. Readiness remains active: it checks the
+local origin, public instance identity and actual Moonlight page every 30 seconds.
+It distinguishes DNS, TLS, HTTP route/origin failures and the wrong installation.
+The same messages appear in `docker logs`; installed packages or a connected
+Tunnel alone are not reported as public readiness. If a new hostname still gives
+NXDOMAIN on Windows after the public service is ready, run `Clear-DnsClientCache`
+in PowerShell and reload the browser. This does not change your DNS server.
 
 After editing the config on an already running installation, restart the
 container to validate and apply it. Update the repository and rerun the same

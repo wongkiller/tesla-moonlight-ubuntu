@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Supervised service workers. Secrets are read from private files, never argv."""
 import json
+import logging
+from logging.handlers import RotatingFileHandler
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import select
@@ -9,10 +12,83 @@ import socketserver
 import subprocess
 import sys
 import time
+import ssl
+import urllib.error
 import urllib.request
 
 STATE = Path.home() / '.local/share/tesla-moonlight-ubuntu'
 DESKTOP = STATE / 'wsl-desktop'
+
+
+def health_logger():
+    logger = logging.getLogger('readiness')
+    logger.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(asctime)s UTC %(levelname)s %(message)s')
+    formatter.converter = time.gmtime
+    for handler in (logging.StreamHandler(sys.stdout), RotatingFileHandler(
+            STATE / 'logs/ready.log', maxBytes=2_000_000, backupCount=2)):
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    return logger
+
+
+def connection_error(error):
+    if isinstance(error, urllib.error.HTTPError):
+        hints = {404: 'hostname route missing or points to the wrong service',
+                 502: 'Tunnel cannot reach its origin; use http://localhost:8080',
+                 503: 'local web service is not ready',
+                 403: 'request blocked; check Cloudflare Access or firewall rules',
+                 530: 'Cloudflare cannot route to the Tunnel; check connector and DNS'}
+        return f'HTTP {error.code}: {hints.get(error.code, "check origin and Cloudflare logs")}'
+    reason = getattr(error, 'reason', error)
+    if isinstance(reason, socket.gaierror):
+        return 'DNS lookup failed: check hostname/DNS propagation; a client may cache an earlier NXDOMAIN'
+    if isinstance(reason, ssl.SSLError):
+        return 'TLS certificate verification failed; check hostname and Cloudflare certificate status'
+    if isinstance(reason, (TimeoutError, socket.timeout)):
+        return 'Connection timed out; check network, Tunnel and origin'
+    return f'Connection failed ({type(reason).__name__}); check service/network logs'
+
+
+def check_web(base, expected):
+    request = urllib.request.Request(base + '/_tesla/health', headers={'User-Agent': 'tesla-moonlight-ubuntu'})
+    with urllib.request.urlopen(request, timeout=8) as response:
+        if json.load(response).get('instance') != expected:
+            raise ValueError('Hostname reaches another installation; check old connectors and the Tunnel route')
+    request = urllib.request.Request(base + '/', headers={'User-Agent': 'tesla-moonlight-ubuntu'})
+    with urllib.request.urlopen(request, timeout=8) as response:
+        if b'Moonlight' not in response.read(131072):
+            raise ValueError('HTTP page is not the Moonlight application; check origin routing')
+
+
+def monitor_health(logger, hostname):
+    expected = (STATE / 'server/instance-id').read_text().strip()
+    previous = None
+    last_message = 0
+    while True:
+        status = {'checked_at': datetime.now(timezone.utc).isoformat(), 'ready': False,
+                  'local': False, 'public': None if not hostname else False}
+        try:
+            check_web('http://127.0.0.1:8080', expected)
+            status['local'] = True
+            if hostname:
+                check_web('https://' + hostname, expected)
+                status['public'] = True
+            status['ready'] = True
+            message = 'READY: ' + ('https://' + hostname if hostname else 'local origin') + ' serves this container and the Moonlight page'
+        except (OSError, ValueError) as error:
+            message = str(error) if isinstance(error, ValueError) and not isinstance(error, json.JSONDecodeError) else connection_error(error)
+            message = ('PUBLIC NOT READY: ' if status['local'] else 'LOCAL NOT READY: ') + message
+        status['message'] = message
+        path = STATE / 'server/health-status.json'
+        temporary = path.with_suffix('.tmp')
+        temporary.write_text(json.dumps(status, indent=2))
+        temporary.replace(path)
+        if message != previous or not status['ready'] or time.monotonic() - last_message >= 300:
+            (logger.info if status['ready'] else logger.error)(message)
+            last_message = time.monotonic()
+        previous = message
+        time.sleep(30)
 
 
 def environment():
@@ -58,6 +134,12 @@ class Origin(socketserver.BaseRequestHandler):
         self.request.settimeout(30)
         first = self.request.recv(65536)
         if first.startswith(b'GET /_tesla/health '):
+            try:
+                with urllib.request.urlopen('http://127.0.0.1:43780/', timeout=2):
+                    pass
+            except OSError:
+                self.request.sendall(b'HTTP/1.1 503 Service Unavailable\r\nContent-Length: 0\r\nConnection: close\r\n\r\n')
+                return
             body = json.dumps({'instance': (STATE / 'server/instance-id').read_text().strip()}).encode()
             self.request.sendall(b'HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nCache-Control: no-store\r\nConnection: close\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body)
             return
@@ -128,24 +210,16 @@ def main(role):
         wait_url('http://127.0.0.1:8080/')
         run('cloudflared', 'tunnel', '--no-autoupdate', 'run', '--token-file', STATE / 'server/tunnel.token')
     elif role == 'ready':
-        wait_url('http://127.0.0.1:43780/')
-        subprocess.run(['python3', str(STATE / 'pair-wsl-host.py')], check=True)
-        settings = json.loads((STATE / 'server/deployment.json').read_text())
-        hostname = settings.get('public_hostname')
-        if hostname:
-            expected = (STATE / 'server/instance-id').read_text().strip()
-            for _ in range(60):
-                try:
-                    request = urllib.request.Request(f'https://{hostname}/_tesla/health', headers={'User-Agent': 'tesla-moonlight-ubuntu'})
-                    with urllib.request.urlopen(request, timeout=5) as response:
-                        if json.load(response).get('instance') == expected:
-                            print(f'READY: https://{hostname} reaches this container.', flush=True)
-                            return
-                except (OSError, ValueError):
-                    pass
-                time.sleep(5)
-            raise RuntimeError('Local services are ready, but hostname does not reach this container. Check Tunnel route -> http://localhost:8080, DNS, and old connectors sharing the token.')
-        print('READY: local container desktop and YouTube Remote are paired.', flush=True)
+        logger = health_logger()
+        logger.info('STARTING: waiting for web service and automatic Sunshine pairing')
+        try:
+            wait_url('http://127.0.0.1:43780/')
+            subprocess.run(['python3', str(STATE / 'pair-wsl-host.py')], check=True)
+            settings = json.loads((STATE / 'server/deployment.json').read_text())
+            monitor_health(logger, settings.get('public_hostname'))
+        except Exception as error:
+            logger.error('STARTUP FAILED (%s); inspect web.log and sunshine.log. Supervisor will retry.', type(error).__name__)
+            raise
     else:
         raise ValueError('Unknown service role')
 

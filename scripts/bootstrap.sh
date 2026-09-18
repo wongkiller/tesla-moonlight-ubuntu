@@ -82,4 +82,4 @@ fi
 if [[ $mode == --dependencies ]]; then echo 'System dependencies and runtime are ready.'; exit 0; fi
 python3 "$root_dir/scripts/container-setup.py" install "$config"
 python3 "$root_dir/scripts/configure-container-route.py" "$config"
-echo 'Installed. Start with: bash scripts/container-entrypoint.sh'
+echo 'Configuration installed. Public access is NOT confirmed yet; wait for READY in docker logs.'

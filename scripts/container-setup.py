@@ -163,7 +163,7 @@ directory={STATE}
 environment=HOME="{HOME}",USER="sunshine"
 priority={10 + index}
 autostart={'false' if role == 'youtube-browser' else 'true'}
-autorestart={'false' if role in ('ready', 'youtube-browser') else 'unexpected'}
+autorestart={'false' if role == 'youtube-browser' else 'unexpected'}
 startsecs={0 if role == 'ready' else 2}
 startretries=5
 stopasgroup=true
