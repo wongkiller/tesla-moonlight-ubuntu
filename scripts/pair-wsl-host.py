@@ -2,6 +2,7 @@
 """Pair the local WSL Sunshine with the local web bridge, keeping secrets private."""
 import base64
 import json
+import os
 from pathlib import Path
 import ssl
 import time
@@ -35,7 +36,7 @@ def main():
 
     with web('hosts') as response:
         hosts = json.load(response)['hosts']
-    matching = [item for item in hosts if item['name'] == 'Ubuntu 26.04 WSL Desktop']
+    matching = [item for item in hosts if item['name'] == os.environ.get('TESLA_HOST_NAME', 'Ubuntu 26.04 WSL Desktop')]
     if matching:
         host_id = matching[0]['host_id']
     else:

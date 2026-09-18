@@ -1,0 +1,9 @@
+{
+  "public_hostname": "",
+  "web_password": "CHANGE_ME_USE_AT_LEAST_16_CHARACTERS",
+  "cloudflare_turn_token_id": "",
+  "cloudflare_turn_api_token": "",
+  "cloudflare_tunnel_token": "",
+  "cloudflare_api_token": "",
+  "cloudflare_zone_id": ""
+}

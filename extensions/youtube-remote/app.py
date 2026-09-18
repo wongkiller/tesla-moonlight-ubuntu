@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """Lifecycle of the isolated YouTube app; never stops a user's other browser."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -21,14 +22,21 @@ def control(path, body=None):
 
 
 def cancel_cleanup():
+    if os.environ.get('TESLA_CONTAINER') == '1':
+        return
     subprocess.run(['systemctl', '--user', 'stop', 'tesla-youtube-pause.timer',
                     'tesla-youtube-pause.service'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def main(action):
+    container = os.environ.get('TESLA_CONTAINER') == '1'
+    manager = ['supervisorctl', '-c', '/etc/tesla-moonlight-ubuntu/supervisord.conf']
     if action == 'launch':
         cancel_cleanup()
-        subprocess.run(['systemctl', '--user', 'start', 'tesla-youtube-control', 'tesla-youtube-browser'], check=True)
+        if container:
+            subprocess.run([*manager, 'start', 'youtube-browser'], check=True)
+        else:
+            subprocess.run(['systemctl', '--user', 'start', 'tesla-youtube-control', 'tesla-youtube-browser'], check=True)
         for _ in range(60):
             try:
                 control('attach')
@@ -38,6 +46,9 @@ def main(action):
                 time.sleep(.25)
         raise SystemExit('YouTube did not become ready; inspect tesla-youtube-browser/control journals')
     elif action == 'cleanup':
+        if container:
+            main('pause')
+            return
         cancel_cleanup()
         subprocess.run(['systemd-run', '--user', '--collect', '--unit=tesla-youtube-pause',
                         '--on-active=15s', '/usr/bin/python3', str(STATE / 'app.py'), 'pause'], check=True)
@@ -48,7 +59,8 @@ def main(action):
             pass  # Closed apps do not need cleanup.
     elif action == 'stop':
         cancel_cleanup()
-        subprocess.run(['systemctl', '--user', 'stop', 'tesla-youtube-browser'], check=True)
+        subprocess.run([*manager, 'stop', 'youtube-browser'] if container else
+                       ['systemctl', '--user', 'stop', 'tesla-youtube-browser'], check=True)
     else:
         raise SystemExit('Expected launch, cleanup, pause or stop')
 

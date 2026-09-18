@@ -9,3 +9,7 @@
 **/__pycache__/
 *.pyc
 /.local-test/
+**/internet.json
+**/deployment.json
+*.token
+*.log
