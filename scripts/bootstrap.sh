@@ -20,6 +20,9 @@ if [[ ! -f $config ]]; then
   chmod 600 "$config"
 fi
 if [[ $mode == --prepare ]]; then echo "Fill in $config, then run: bash scripts/bootstrap.sh"; exit 0; fi
+[[ $mode == --install || $mode == --dependencies ]] || { echo 'Use --prepare, --dependencies or --install'; exit 1; }
+exec 9>/var/lock/tesla-moonlight-install.lock
+flock 9
 log=/var/log/tesla-moonlight-ubuntu/install.log
 exec > >(tee -a "$log") 2>&1
 failed() {
@@ -42,10 +45,12 @@ if ((${#missing[@]})); then
   apt-get -o Acquire::Retries=3 update
   apt-get -o Acquire::Retries=3 install -y --no-install-recommends "${missing[@]}"
 fi
-python3 "$root_dir/scripts/container-setup.py" validate "$config"
-mkdir -p /root/.config/tesla-moonlight-ubuntu
-if [[ $(realpath "$config") != /root/.config/tesla-moonlight-ubuntu/internet.json ]]; then
-  install -m 600 "$config" /root/.config/tesla-moonlight-ubuntu/internet.json
+if [[ $mode == --install ]]; then
+  python3 "$root_dir/scripts/container-setup.py" validate "$config"
+  mkdir -p /root/.config/tesla-moonlight-ubuntu
+  if [[ $(realpath "$config") != /root/.config/tesla-moonlight-ubuntu/internet.json ]]; then
+    install -m 600 "$config" /root/.config/tesla-moonlight-ubuntu/internet.json
+  fi
 fi
 for component in sunshine cloudflared; do
   if ! command -v "$component" >/dev/null; then
@@ -72,6 +77,7 @@ if ! python3 "$root_dir/scripts/container-setup.py" verify-build >/dev/null 2>&1
   rustup toolchain install nightly-2025-09-01 --profile minimal
   bash "$root_dir/scripts/build-runtime.sh"
 fi
+if [[ $mode == --dependencies ]]; then echo 'System dependencies and tested runtime are ready.'; exit 0; fi
 python3 "$root_dir/scripts/container-setup.py" install "$config"
 python3 "$root_dir/scripts/configure-container-route.py" "$config"
 echo 'Installed. Start with: bash scripts/container-entrypoint.sh'

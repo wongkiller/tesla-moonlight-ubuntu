@@ -8,6 +8,7 @@ while ! command -v python3 >/dev/null || ! command -v nano >/dev/null; do
   echo 'Initial dependency download failed; retrying in 30 seconds.'
   sleep 30
 done
+bash "$root_dir/scripts/bootstrap.sh" --dependencies
 while ! python3 "$root_dir/scripts/container-setup.py" validate "$config"; do
   echo "WAITING FOR CONFIG: $config (edit it without posting credentials to GitHub)."
   sleep 15
