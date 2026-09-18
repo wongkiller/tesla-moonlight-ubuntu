@@ -221,17 +221,16 @@ def main(role):
         wait_display()
         # A new profile generation discards cached Chrome ML models that can
         # keep crashing after the responsible feature has been disabled.
-        codec_guard = STATE / 'youtube-remote/codec-guard'
         version = subprocess.run(['google-chrome', '--version'], capture_output=True, text=True).stdout.strip()
         print(f'{datetime.now(timezone.utc).isoformat()} START {version}; '
-              f'profile=profile-v4; youtube_codecs=h264-only; disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
-        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v4'),
+              f'profile=profile-v5; v8=jitless; disabled_features={",".join(CHROME_DISABLED_FEATURES)}', flush=True)
+        run('google-chrome', '--user-data-dir=' + str(STATE / 'youtube-remote/profile-v5'),
             '--remote-debugging-address=127.0.0.1', '--remote-debugging-port=9227',
             '--remote-allow-origins=http://127.0.0.1:9227', '--ozone-platform=x11',
             '--app=https://www.youtube.com/', '--start-fullscreen', '--no-first-run',
             '--no-default-browser-check', '--disable-session-crashed-bubble', '--disable-background-mode',
             '--force-device-scale-factor=1.25', '--disable-gpu', '--disable-quic',
-            '--disable-extensions-except=' + str(codec_guard), '--load-extension=' + str(codec_guard),
+            '--js-flags=--jitless',
             # Chrome's local ML helpers are unrelated to YouTube playback. On
             # older AMD hosts their TFLite/XNNPACK path can crash the renderer.
             '--disable-features=' + ','.join(CHROME_DISABLED_FEATURES))
