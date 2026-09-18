@@ -3,8 +3,28 @@
 import os
 from pathlib import Path
 import re
+import socket
 import subprocess
 import sys
+import time
+
+
+def refresh_sunshine_input(env):
+    # Sunshine's X11 input backend retains the screen size from startup.
+    # Reopen it after RandR changes, before the browser launches its new stream.
+    if os.environ.get('TESLA_CONTAINER') == '1':
+        command = ['supervisorctl', '-c', '/etc/tesla-moonlight-ubuntu/supervisord.conf', 'restart', 'sunshine']
+    else:
+        command = ['systemctl', '--user', 'restart', 'tesla-wsl-sunshine.service']
+    subprocess.run(command, env=env, check=True, capture_output=True, text=True, timeout=30)
+    until = time.monotonic() + 15
+    while time.monotonic() < until:
+        try:
+            with socket.create_connection(('127.0.0.1', 47989), timeout=1):
+                return
+        except OSError:
+            time.sleep(0.2)
+    raise RuntimeError('Sunshine did not become ready after display resize; check sunshine.log')
 
 
 def dimensions(preset, values):
@@ -30,6 +50,8 @@ def main():
         return subprocess.check_output(['xrandr', *args], env=env, text=True, stderr=subprocess.PIPE, timeout=8)
 
     query = run('--query')
+    current = re.search(r'current (\d+) x (\d+)', query)
+    changed = not current or tuple(map(int, current.groups())) != (width, height)
     output = re.search(r'^(DUMMY\d+) connected', query, re.M)
     if not output:
         raise ValueError('A private Xorg dummy output is required; run bash install.sh --wsl')
@@ -46,11 +68,14 @@ def main():
                 raise
         run('--addmode', output.group(1), mode)
     run('--output', output.group(1), '--mode', mode)
+    if changed and not os.environ.get('TESLA_DISPLAY_TEST'):
+        print(f'Display changed to {width}x{height}; refreshing Sunshine input coordinates', file=sys.stderr)
+        refresh_sunshine_input(env)
     print(f'{width}x{height}@60')
 
 
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, IndexError, subprocess.SubprocessError) as error:
+    except (ValueError, IndexError, OSError, RuntimeError, subprocess.SubprocessError) as error:
         raise SystemExit(str(error)) from None
