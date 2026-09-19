@@ -3,7 +3,7 @@
 
   const RAIL_ID = "cockpit-youtube-rail";
   const INSTALLATION_KEY = "__cockpitYouTubeRemoteInstallation";
-  const INSTALLATION_VERSION = 15;
+  const INSTALLATION_VERSION = 16;
   const LAYOUT_STORAGE_KEY = "cockpitYouTubeLayout";
   const existingInstallation = globalThis[INSTALLATION_KEY];
 
@@ -44,18 +44,26 @@
     }
   }
 
-  const ZOOM_HOST_SELECTOR = [
-    ".ytLockupViewModelHost",
-    "ytm-shorts-lockup-view-model.shortsLockupViewModelHost",
-    "ytd-rich-item-renderer",
-    "ytd-video-renderer",
-    "ytd-compact-video-renderer",
-    "ytd-rich-grid-slim-media"
-  ].join(",");
-
   function zoomHostFor(element) {
     if (!(element instanceof Element)) return null;
-    return element.closest(ZOOM_HOST_SELECTOR);
+    // Prefer the outer card so title/channel zoom with the hover preview
+    // video. closest() on ZOOM_HOST_SELECTOR would stop on the inner
+    // .ytLockupViewModelHost and only enlarge the preview tile.
+    const card = element.closest([
+      "ytd-rich-item-renderer",
+      "ytd-video-renderer",
+      "ytd-compact-video-renderer",
+      "ytd-rich-grid-slim-media",
+      "ytm-shorts-lockup-view-model"
+    ].join(","));
+    if (card) return card;
+    return element.closest(".ytLockupViewModelHost");
+  }
+
+  function restoreZoomOnPage() {
+    applyLayout("focus");
+    const selected = document.querySelector('[data-cockpit-selected="true"]');
+    if (selected) positionZoomHost(selected);
   }
 
   function clearZoomPosition(except) {
@@ -251,6 +259,8 @@
     const selected = document.querySelector('[data-cockpit-selected="true"]');
     if (selected) positionZoomHost(selected);
   }, { passive: true });
+  window.addEventListener("yt-navigate-finish", restoreZoomOnPage);
+  window.addEventListener("yt-page-data-updated", restoreZoomOnPage);
   installation.observer.observe(document, {
     childList: true,
     subtree: true

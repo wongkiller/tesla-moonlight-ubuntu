@@ -57,15 +57,15 @@ body.cockpit-youtube-remote [data-cockpit-selected="true"] *:focus-visible {
 
 /* Lift the card's outer YouTube wrappers too. A large z-index on the inner
    anchor alone cannot escape a lower sibling stacking context. */
-html.cockpit-youtube-focus-zoom ytd-rich-grid-row:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-rich-item-renderer:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-item-section-renderer:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-video-renderer:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-compact-video-renderer:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom #related:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-watch-next-secondary-results-renderer:has([data-cockpit-selected="true"]) {
+html.cockpit-youtube-focus-zoom ytd-rich-grid-row:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-rich-item-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-item-section-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-video-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-compact-video-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom #related:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-watch-next-secondary-results-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]) {
   position: relative !important;
   z-index: 2147482000 !important;
   overflow: visible !important;
@@ -73,10 +73,10 @@ html.cockpit-youtube-focus-zoom ytd-watch-next-secondary-results-renderer:has([d
 
 /* Search has additional clipping/stacking wrappers. Lift those only while a
    result is selected, and keep YouTube's mini guide below the focused card. */
-html.cockpit-youtube-focus-zoom ytd-page-manager:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-search:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-two-column-search-results-renderer:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-section-list-renderer:has([data-cockpit-selected="true"]) {
+html.cockpit-youtube-focus-zoom ytd-page-manager:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-search:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-two-column-search-results-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]),
+html.cockpit-youtube-focus-zoom ytd-section-list-renderer:has([data-cockpit-selected="true"], [data-cockpit-zoom-positioned="true"]) {
   position: relative !important;
   z-index: 2147481000 !important;
   overflow: visible !important;
@@ -113,18 +113,7 @@ html.cockpit-youtube-measuring .ytLockupViewModelHost {
   transition: none !important;
 }
 
-html.cockpit-youtube-focus-zoom ytd-rich-item-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost, ytm-shorts-lockup-view-model.shortsLockupViewModelHost)):hover,
-html.cockpit-youtube-focus-zoom ytd-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):hover,
-html.cockpit-youtube-focus-zoom ytd-compact-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):hover,
-html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model.shortsLockupViewModelHost[data-cockpit-zoom-positioned="true"]:hover,
-html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media[data-cockpit-zoom-positioned="true"]:hover,
-html.cockpit-youtube-focus-zoom .ytLockupViewModelHost[data-cockpit-zoom-positioned="true"]:hover,
-html.cockpit-youtube-focus-zoom ytd-rich-item-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost, ytm-shorts-lockup-view-model.shortsLockupViewModelHost)):has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-compact-video-renderer[data-cockpit-zoom-positioned="true"]:not(:has(.ytLockupViewModelHost)):has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytm-shorts-lockup-view-model.shortsLockupViewModelHost[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom ytd-rich-grid-slim-media[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]),
-html.cockpit-youtube-focus-zoom .ytLockupViewModelHost[data-cockpit-zoom-positioned="true"]:has([data-cockpit-selected="true"]) {
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] {
   z-index: 2147483000 !important;
   transform: translate3d(var(--cockpit-zoom-shift-x, 0px), 0, 0) scale(var(--cockpit-zoom-scale, 1.5)) !important;
   filter: brightness(1.07) saturate(1.06) !important;

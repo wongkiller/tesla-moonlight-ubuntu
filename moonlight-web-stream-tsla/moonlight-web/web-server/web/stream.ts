@@ -36,6 +36,7 @@ const TESLA_QUALITY_MODE_KEY = "mlTeslaQualityMode"
 const TESLA_ZOOM_LOCK_KEY = "mlTeslaZoomLocked"
 const REMOTE_VIEW_MODE_KEY = "mlRemoteViewModeV2"
 const YOUTUBE_MENU_OPACITY_KEY = "mlYoutubeMenuOpacity"
+const SCREEN_BRIGHTNESS_KEY = "mlScreenBrightness"
 let preserveDisplayAcrossReload = false
 
 function getTeslaResolutionMode(): TeslaResolutionMode {
@@ -88,6 +89,19 @@ function applyYoutubeMenuOpacity(value: number) {
     root?.style.setProperty("--youtube-menu-alpha", opacity.toFixed(2))
     root?.style.setProperty("--youtube-card-alpha", Math.max(0.08, opacity - 0.24).toFixed(2))
     root?.style.setProperty("--youtube-menu-blur", `${Math.max(0, Math.round((opacity - 0.25) * 18))}px`)
+}
+
+function getScreenBrightness(): number {
+    const saved = Number.parseInt(localStorage.getItem(SCREEN_BRIGHTNESS_KEY) ?? "0", 10)
+    return Number.isFinite(saved) ? Math.min(50, Math.max(-50, saved)) : 0
+}
+
+function setScreenBrightness(value: number) {
+    localStorage.setItem(SCREEN_BRIGHTNESS_KEY, String(Math.round(value)))
+}
+
+function formatBrightnessOffset(value: number): string {
+    return value > 0 ? `+${value}` : String(value)
 }
 
 function remoteViewModeLabel(mode: RemoteViewMode): string {
@@ -298,6 +312,8 @@ class ViewerApp implements Component {
     private pinchLogStarted = false
     private isYoutubeRemote = false
     private isUb1818Remote = false
+    private shadowBoost = 0
+    private screenBrightness = 0
     private controllerPreviousButtons = new Map<number, boolean[]>()
     private controllerPreviousDirections = new Map<number, Record<string, boolean>>()
     private controllerRepeatAt = new Map<string, number>()
@@ -309,6 +325,14 @@ class ViewerApp implements Component {
         this.hostId = hostId
         this.isYoutubeRemote = appTitle === "YouTube Remote"
         this.isUb1818Remote = appTitle === "UB1818 Remote"
+        try {
+            const saved = localStorage.getItem("mlShadowBoost")
+            if (saved !== null) {
+                const v = parseFloat(saved)
+                if (isFinite(v) && v >= 0 && v <= 1) this.shadowBoost = v
+            }
+        } catch (_) {}
+        this.screenBrightness = getScreenBrightness()
 
         // Bind update loops
         this.onTouchUpdate = this.onTouchUpdate.bind(this)
@@ -1615,19 +1639,36 @@ class ViewerApp implements Component {
 
     setBrightness(value: number) {
         // value = 0 (no effect) to 1 (max shadow boost)
-        // Gamma curve lifts dark pixels disproportionately; saturation compensation
-        // counteracts the perceived colour washout caused by dynamic-range compression.
+        this.shadowBoost = Math.min(1, Math.max(0, value))
+        try { localStorage.setItem('mlShadowBoost', String(this.shadowBoost)) } catch (_) {}
+        this.applyVideoFilters()
+    }
+
+    setScreenBrightness(value: number) {
+        this.screenBrightness = Math.min(50, Math.max(-50, Math.round(value)))
+        setScreenBrightness(this.screenBrightness)
+        this.applyVideoFilters()
+    }
+
+    getScreenBrightness(): number {
+        return this.screenBrightness
+    }
+
+    private applyVideoFilters() {
         if (!this.shadowBoostSvg) this.setupShadowBoostFilter()
-        const exponent = 1 - value * 0.7  // 0 -> 1.0 (linear), 1 -> 0.3 (strong lift)
+        const boost = this.shadowBoost
+        const exponent = 1 - boost * 0.7  // 0 -> 1.0 (linear), 1 -> 0.3 (strong lift)
         for (const fn of this.shadowBoostFuncs) {
             fn.setAttribute('exponent', String(exponent))
         }
-        // Saturation scales with boost: 0 -> 1.0, 1 -> 1.6
-        const saturation = 1 + value * 0.6
-        const filterStr = value === 0 ? '' : `url(#ml-shadow-filter) saturate(${saturation})`
+        const saturation = 1 + boost * 0.6
+        const brightness = 1 + this.screenBrightness / 100
+        const parts: string[] = []
+        if (this.screenBrightness !== 0) parts.push(`brightness(${brightness})`)
+        if (boost !== 0) parts.push(`url(#ml-shadow-filter) saturate(${saturation})`)
+        const filterStr = parts.join(" ")
         this.canvasElement.style.filter = filterStr
         this.videoElement.style.filter = filterStr
-        try { localStorage.setItem('mlShadowBoost', String(value)) } catch (_) {}
     }
 
     private shadowBoostSvg: SVGSVGElement | null = null
@@ -1658,14 +1699,7 @@ class ViewerApp implements Component {
     }
 
     getBrightness(): number {
-        try {
-            const saved = localStorage.getItem('mlShadowBoost')
-            if (saved !== null) {
-                const v = parseFloat(saved)
-                if (isFinite(v) && v >= 0 && v <= 1) return v
-            }
-        } catch (_) {}
-        return 0
+        return this.shadowBoost
     }
 }
 
@@ -2335,30 +2369,29 @@ class ViewerSidebar implements Component, Sidebar {
         this.youtubeStatus.innerText = "Direct controls ready"
         root.appendChild(this.youtubeStatus)
 
-        const opacityControl = document.createElement("div")
-        opacityControl.classList.add("youtube-opacity-control")
-        const opacityHeader = document.createElement("label")
-        opacityHeader.innerHTML = "<span>Menu opacity</span>"
-        const opacityValue = document.createElement("output")
-        const opacitySlider = document.createElement("input")
-        opacitySlider.type = "range"
-        opacitySlider.min = "25"
-        opacitySlider.max = "100"
-        opacitySlider.step = "5"
-        opacitySlider.value = String(getYoutubeMenuOpacity())
-        opacityValue.value = `${opacitySlider.value}%`
-        opacityHeader.appendChild(opacityValue)
-        opacitySlider.setAttribute("aria-label", "Menu opacity percent")
-        opacitySlider.addEventListener("input", () => {
-            const value = Number.parseInt(opacitySlider.value, 10)
-            opacityValue.value = `${value}%`
-            setYoutubeMenuOpacity(value)
-            applyYoutubeMenuOpacity(value)
+        const brightnessControl = document.createElement("div")
+        brightnessControl.classList.add("youtube-opacity-control")
+        const brightnessHeader = document.createElement("label")
+        brightnessHeader.innerHTML = "<span>Brightness</span>"
+        const brightnessValue = document.createElement("output")
+        const brightnessSlider = document.createElement("input")
+        const initialScreenBrightness = this.app.getScreenBrightness()
+        brightnessSlider.type = "range"
+        brightnessSlider.min = "-50"
+        brightnessSlider.max = "50"
+        brightnessSlider.step = "1"
+        brightnessSlider.value = String(initialScreenBrightness)
+        brightnessValue.value = formatBrightnessOffset(initialScreenBrightness)
+        brightnessHeader.appendChild(brightnessValue)
+        brightnessSlider.setAttribute("aria-label", "Screen brightness offset")
+        brightnessSlider.addEventListener("input", () => {
+            const value = Number.parseInt(brightnessSlider.value, 10)
+            brightnessValue.value = formatBrightnessOffset(value)
+            this.app.setScreenBrightness(value)
         })
-        opacityControl.append(opacityHeader, opacitySlider)
-        // Keep setup preferences in the collapsible settings section so the
-        // everyday navigation rail stays compact.
-        this.buttonDiv.appendChild(opacityControl)
+        brightnessControl.append(brightnessHeader, brightnessSlider)
+        this.app.setScreenBrightness(initialScreenBrightness)
+        root.appendChild(brightnessControl)
 
         const searchForm = document.createElement("form")
         searchForm.classList.add("youtube-touch-search", "youtube-touch-card")
