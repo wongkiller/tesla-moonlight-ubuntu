@@ -210,16 +210,12 @@ def main(role):
             '--no-default-browser-check', '--disable-session-crashed-bubble', '--disable-background-mode',
             '--force-device-scale-factor=1.25', '--disable-gpu', '--disable-quic',
         ]
-        # Prefer fast RAM-backed /dev/shm. Docker's 64 MiB default is too small
-        # for Xorg, Sunshine and Chrome together, so retain a compatibility
-        # fallback only for containers that were created without shm_size.
-        shared_memory = '/dev/shm'
-        if shm_total < 256 * 1024 * 1024:
-            chrome_args.append('--disable-dev-shm-usage')
-            shared_memory = 'container-filesystem-fallback'
+        # Always use RAM-backed /dev/shm. CasaOS often drops compose shm_size and
+        # leaves Docker's 64 MiB default; the entrypoint remounts it to 1 GiB.
+        # --disable-dev-shm-usage forces Chrome onto /tmp overlay and lags A/V.
         print(f'{datetime.now(timezone.utc).isoformat()} START {version}; '
               f'profile=profile-v5; dev_shm_total={shm_total}; '
-              f'dev_shm_available={shm_available}; shared_memory={shared_memory}', flush=True)
+              f'dev_shm_available={shm_available}; shared_memory=/dev/shm', flush=True)
         run('google-chrome', *chrome_args)
     elif role == 'tunnel':
         wait_url('http://127.0.0.1:8080/')

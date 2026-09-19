@@ -14,4 +14,7 @@ while ! python3 "$root_dir/scripts/container-setup.py" validate "$config"; do
   sleep 15
 done
 bash "$root_dir/scripts/bootstrap.sh"
+# CasaOS custom apps often strip compose shm_size, so Docker still gives 64 MiB.
+# Root in this namespace can enlarge the tmpfs without recreating the container.
+mount -o remount,size=1G /dev/shm || true
 exec /usr/bin/supervisord -n -c /etc/tesla-moonlight-ubuntu/supervisord.conf
