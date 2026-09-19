@@ -40,15 +40,15 @@ class PcmPlaybackProcessor extends AudioWorkletProcessor {
         // same deep target trades a longer mute per underrun for underruns
         // becoming rare in the first place.
         // The Tesla/Cloudflare path has shown individual packet gaps around
-        // 135ms and can briefly stall for 100-300ms while driving. A 300ms
-        // prime is only barely larger than those stalls: the buffer empties,
-        // then re-prime outputs ~300ms of silence — which feels like a
-        // 400-500ms dropout, independent of stream quality. Keep a 500ms
-        // reserve so a Tesla stall cannot drain the ring to zero.
-        this.primeSamples = 24000;        // 500ms
-        this.targetSamples = 24000;       // 500ms — level to skip back to on hard overrun
-        this.softOverrunSamples = 36000;  // 750ms — above this, speed up slightly
-        this.hardOverrunSamples = 57600;  // 1200ms — above this, skip ahead
+        // 135ms and can briefly stall for 100-300ms while driving. A 150ms
+        // prime leaves essentially no scheduling margin and repeatedly falls
+        // into silence/re-prime cycles that sound like crackling. Keep a
+        // music-friendly 300ms reserve and avoid discontinuous hard skips
+        // until the queue is genuinely excessive.
+        this.primeSamples = 14400;        // 300ms
+        this.targetSamples = 14400;       // 300ms — level to skip back to on hard overrun
+        this.softOverrunSamples = 21600;  // 450ms — above this, speed up slightly
+        this.hardOverrunSamples = 38400;  // 800ms — above this, skip ahead
         // True while refilling to primeSamples (at startup and after underrun).
         this.priming = true;
         // Direct PCM port from decode worker (bypasses main thread entirely)

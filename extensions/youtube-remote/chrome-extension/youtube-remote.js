@@ -3,7 +3,7 @@
 
   const RAIL_ID = "cockpit-youtube-rail";
   const INSTALLATION_KEY = "__cockpitYouTubeRemoteInstallation";
-  const INSTALLATION_VERSION = 19;
+  const INSTALLATION_VERSION = 18;
   const LAYOUT_STORAGE_KEY = "cockpitYouTubeLayout";
   const existingInstallation = globalThis[INSTALLATION_KEY];
 
@@ -309,25 +309,11 @@
   }, { passive: true });
   window.addEventListener("yt-navigate-finish", restoreZoomOnPage);
   window.addEventListener("yt-page-data-updated", restoreZoomOnPage);
-  let previewPinQueued = false;
   const pinPreviewFrame = () => {
-    previewPinQueued = false;
     pinHoverPreviewToPoster();
-    if (hoverPreviewElement()) {
-      previewPinQueued = true;
-      requestAnimationFrame(pinPreviewFrame);
-    }
-  };
-  const requestPreviewPin = () => {
-    if (previewPinQueued) return;
-    previewPinQueued = true;
     requestAnimationFrame(pinPreviewFrame);
   };
-  installation.observer.disconnect();
-  installation.observer = new MutationObserver(() => {
-    installRail();
-    requestPreviewPin();
-  });
+  requestAnimationFrame(pinPreviewFrame);
   installation.observer.observe(document, {
     childList: true,
     subtree: true
