@@ -3,7 +3,7 @@
 
   const RAIL_ID = "cockpit-youtube-rail";
   const INSTALLATION_KEY = "__cockpitYouTubeRemoteInstallation";
-  const INSTALLATION_VERSION = 17;
+  const INSTALLATION_VERSION = 18;
   const LAYOUT_STORAGE_KEY = "cockpitYouTubeLayout";
   const existingInstallation = globalThis[INSTALLATION_KEY];
 
@@ -74,26 +74,31 @@
   function pinHoverPreviewToPoster() {
     const host = document.querySelector('[data-cockpit-zoom-positioned="true"]');
     const preview = hoverPreviewElement();
+    if (!preview) return;
+    const style = getComputedStyle(preview);
+    if (style.display === "none" || style.visibility === "hidden" || preview.hasAttribute("hidden")) return;
     const thumb = thumbnailFor(host);
-    if (!host || !preview || !thumb) return;
-    const rect = thumb.getBoundingClientRect();
-    if (rect.width < 8 || rect.height < 8) return;
-    const style = preview.style;
-    style.setProperty("position", "fixed", "important");
-    style.setProperty("left", `${rect.left}px`, "important");
-    style.setProperty("top", `${rect.top}px`, "important");
-    style.setProperty("width", `${rect.width}px`, "important");
-    style.setProperty("height", `${rect.height}px`, "important");
-    style.setProperty("max-width", `${rect.width}px`, "important");
-    style.setProperty("max-height", `${rect.height}px`, "important");
-    style.setProperty("min-width", `${rect.width}px`, "important");
-    style.setProperty("min-height", `${rect.height}px`, "important");
-    style.setProperty("transform", "none", "important");
-    style.setProperty("margin", "0", "important");
-    style.setProperty("overflow", "hidden", "important");
-    style.setProperty("border-radius", "12px", "important");
-    style.setProperty("z-index", "2147483600", "important");
-    style.setProperty("pointer-events", "none", "important");
+    if (!host || !thumb) return;
+    if (preview.parentElement !== thumb) thumb.append(preview);
+    const box = preview.style;
+    box.setProperty("position", "absolute", "important");
+    box.setProperty("inset", "0", "important");
+    box.setProperty("left", "0", "important");
+    box.setProperty("top", "0", "important");
+    box.setProperty("right", "0", "important");
+    box.setProperty("bottom", "0", "important");
+    box.setProperty("width", "100%", "important");
+    box.setProperty("height", "100%", "important");
+    box.setProperty("max-width", "none", "important");
+    box.setProperty("max-height", "none", "important");
+    box.setProperty("min-width", "0", "important");
+    box.setProperty("min-height", "0", "important");
+    box.setProperty("transform", "none", "important");
+    box.setProperty("margin", "0", "important");
+    box.setProperty("overflow", "hidden", "important");
+    box.setProperty("border-radius", "inherit", "important");
+    box.setProperty("z-index", "2", "important");
+    box.setProperty("pointer-events", "none", "important");
     preview.setAttribute("data-cockpit-pinned-preview", "true");
   }
 

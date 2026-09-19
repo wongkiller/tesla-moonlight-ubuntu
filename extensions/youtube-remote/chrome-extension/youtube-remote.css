@@ -115,6 +115,8 @@ html.cockpit-youtube-measuring .ytLockupViewModelHost {
 
 html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] {
   z-index: 2147483000 !important;
+  overflow: hidden !important;
+  isolation: isolate;
   transform: translate3d(var(--cockpit-zoom-shift-x, 0px), 0, 0) scale(var(--cockpit-zoom-scale, 1.5)) !important;
   filter: brightness(1.07) saturate(1.06) !important;
   border-radius: 14px !important;
@@ -137,13 +139,14 @@ html.cockpit-youtube-focus-zoom [data-cockpit-zoom-related="true"] {
   transform-origin: right center !important;
 }
 
-/* Hover preview must replace the poster, not pop out as a second zoomed
-   player. Keep title/channel on the zoomed card. */
+/* Hover preview is reparented into the thumbnail so it scales with the
+   whole card box. Never let it sit as a page-level overlay. */
 html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-thumbnail,
 html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] a#thumbnail,
 html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #thumbnail {
   position: relative !important;
   overflow: hidden !important;
+  isolation: isolate;
 }
 
 html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-thumbnail video,
@@ -157,20 +160,28 @@ html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #thumbnail
   transform: none !important;
 }
 
-html.cockpit-youtube-focus-zoom ytd-video-preview,
-html.cockpit-youtube-focus-zoom #video-preview {
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-video-preview,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #video-preview,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] [data-cockpit-pinned-preview="true"] {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   pointer-events: none !important;
   box-shadow: none !important;
   background: #000 !important;
+  transform: none !important;
 }
 
-html.cockpit-youtube-focus-zoom ytd-video-preview #media-container,
-html.cockpit-youtube-focus-zoom ytd-video-preview #player-container,
-html.cockpit-youtube-focus-zoom ytd-video-preview #inline-preview-player,
-html.cockpit-youtube-focus-zoom ytd-video-preview video,
-html.cockpit-youtube-focus-zoom #video-preview video {
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-video-preview #media-container,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-video-preview #player-container,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-video-preview #inline-preview-player,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-video-preview video,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #video-preview video {
   width: 100% !important;
   height: 100% !important;
   max-width: none !important;
