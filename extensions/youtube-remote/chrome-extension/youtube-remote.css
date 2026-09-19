@@ -137,6 +137,58 @@ html.cockpit-youtube-focus-zoom [data-cockpit-zoom-related="true"] {
   transform-origin: right center !important;
 }
 
+/* Hover preview must replace the poster, not pop out as a second zoomed
+   player. Keep title/channel on the zoomed card. */
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-thumbnail,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] a#thumbnail,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #thumbnail {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] ytd-thumbnail video,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] a#thumbnail video,
+html.cockpit-youtube-focus-zoom [data-cockpit-zoom-positioned="true"] #thumbnail video {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  transform: none !important;
+}
+
+html.cockpit-youtube-focus-zoom ytd-video-preview,
+html.cockpit-youtube-focus-zoom #video-preview {
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  box-shadow: none !important;
+  background: #000 !important;
+}
+
+html.cockpit-youtube-focus-zoom ytd-video-preview #media-container,
+html.cockpit-youtube-focus-zoom ytd-video-preview #player-container,
+html.cockpit-youtube-focus-zoom ytd-video-preview #inline-preview-player,
+html.cockpit-youtube-focus-zoom ytd-video-preview video,
+html.cockpit-youtube-focus-zoom #video-preview video {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  transform: none !important;
+}
+
+html.cockpit-youtube-focus-zoom ytd-video-preview #text-wrapper,
+html.cockpit-youtube-focus-zoom ytd-video-preview #meta,
+html.cockpit-youtube-focus-zoom ytd-video-preview ytd-video-preview-text,
+html.cockpit-youtube-focus-zoom ytd-video-preview .ytp-inline-preview-ui,
+html.cockpit-youtube-focus-zoom ytd-video-preview .ytp-chrome-top,
+html.cockpit-youtube-focus-zoom ytd-video-preview .ytp-gradient-top,
+html.cockpit-youtube-focus-zoom ytd-video-preview .ytp-gradient-bottom {
+  display: none !important;
+}
+
 #cockpit-youtube-rail button {
   width: var(--cockpit-touch-size);
   height: var(--cockpit-touch-size);

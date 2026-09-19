@@ -3,7 +3,7 @@
 
   const RAIL_ID = "cockpit-youtube-rail";
   const INSTALLATION_KEY = "__cockpitYouTubeRemoteInstallation";
-  const INSTALLATION_VERSION = 16;
+  const INSTALLATION_VERSION = 17;
   const LAYOUT_STORAGE_KEY = "cockpitYouTubeLayout";
   const existingInstallation = globalThis[INSTALLATION_KEY];
 
@@ -46,9 +46,11 @@
 
   function zoomHostFor(element) {
     if (!(element instanceof Element)) return null;
-    // Prefer the outer card so title/channel zoom with the hover preview
-    // video. closest() on ZOOM_HOST_SELECTOR would stop on the inner
-    // .ytLockupViewModelHost and only enlarge the preview tile.
+    if (element.closest("ytd-video-preview, #video-preview")) {
+      return document.querySelector('[data-cockpit-zoom-positioned="true"]');
+    }
+    // Prefer the outer card so title/channel stay zoomed. The hover preview
+    // video must replace the poster in-place, not become a second zoom target.
     const card = element.closest([
       "ytd-rich-item-renderer",
       "ytd-video-renderer",
@@ -58,6 +60,41 @@
     ].join(","));
     if (card) return card;
     return element.closest(".ytLockupViewModelHost");
+  }
+
+  function thumbnailFor(host) {
+    if (!(host instanceof Element)) return null;
+    return host.querySelector("ytd-thumbnail, a#thumbnail, #thumbnail, .ytLockupViewModelHostThumbnail");
+  }
+
+  function hoverPreviewElement() {
+    return document.querySelector("ytd-video-preview, #video-preview");
+  }
+
+  function pinHoverPreviewToPoster() {
+    const host = document.querySelector('[data-cockpit-zoom-positioned="true"]');
+    const preview = hoverPreviewElement();
+    const thumb = thumbnailFor(host);
+    if (!host || !preview || !thumb) return;
+    const rect = thumb.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return;
+    const style = preview.style;
+    style.setProperty("position", "fixed", "important");
+    style.setProperty("left", `${rect.left}px`, "important");
+    style.setProperty("top", `${rect.top}px`, "important");
+    style.setProperty("width", `${rect.width}px`, "important");
+    style.setProperty("height", `${rect.height}px`, "important");
+    style.setProperty("max-width", `${rect.width}px`, "important");
+    style.setProperty("max-height", `${rect.height}px`, "important");
+    style.setProperty("min-width", `${rect.width}px`, "important");
+    style.setProperty("min-height", `${rect.height}px`, "important");
+    style.setProperty("transform", "none", "important");
+    style.setProperty("margin", "0", "important");
+    style.setProperty("overflow", "hidden", "important");
+    style.setProperty("border-radius", "12px", "important");
+    style.setProperty("z-index", "2147483600", "important");
+    style.setProperty("pointer-events", "none", "important");
+    preview.setAttribute("data-cockpit-pinned-preview", "true");
   }
 
   function restoreZoomOnPage() {
@@ -156,10 +193,12 @@
   }
 
   function positionHoveredCard(event) {
-    const link = event.target instanceof Element
-      ? event.target.closest('a[href*="/watch"], a[href*="/shorts/"], a[href*="/playables/"]')
-      : null;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    if (target.closest("ytd-video-preview, #video-preview")) return;
+    const link = target.closest('a[href*="/watch"], a[href*="/shorts/"], a[href*="/playables/"]');
     if (link) positionZoomHost(link);
+    pinHoverPreviewToPoster();
   }
 
   function runAction(action, rail) {
@@ -249,7 +288,10 @@
     installRail,
     applyLayout,
     positionZoomHost,
-    observer: new MutationObserver(installRail)
+    observer: new MutationObserver(() => {
+      installRail();
+      pinHoverPreviewToPoster();
+    })
   };
   globalThis[INSTALLATION_KEY] = installation;
 
@@ -258,9 +300,15 @@
   window.addEventListener("resize", () => {
     const selected = document.querySelector('[data-cockpit-selected="true"]');
     if (selected) positionZoomHost(selected);
+    pinHoverPreviewToPoster();
   }, { passive: true });
   window.addEventListener("yt-navigate-finish", restoreZoomOnPage);
   window.addEventListener("yt-page-data-updated", restoreZoomOnPage);
+  const pinPreviewFrame = () => {
+    pinHoverPreviewToPoster();
+    requestAnimationFrame(pinPreviewFrame);
+  };
+  requestAnimationFrame(pinPreviewFrame);
   installation.observer.observe(document, {
     childList: true,
     subtree: true

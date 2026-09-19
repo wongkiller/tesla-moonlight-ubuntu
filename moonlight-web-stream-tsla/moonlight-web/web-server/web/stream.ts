@@ -2389,7 +2389,22 @@ class ViewerSidebar implements Component, Sidebar {
             brightnessValue.value = formatBrightnessOffset(value)
             this.app.setScreenBrightness(value)
         })
-        brightnessControl.append(brightnessHeader, brightnessSlider)
+        const brightnessRow = document.createElement("div")
+        brightnessRow.classList.add("youtube-brightness-row")
+        const brightnessReset = document.createElement("button")
+        brightnessReset.type = "button"
+        brightnessReset.classList.add("youtube-brightness-reset")
+        brightnessReset.innerText = "Reset"
+        brightnessReset.title = "Reset brightness to 0"
+        brightnessReset.setAttribute("aria-label", "Reset brightness")
+        const applyBrightness = (value: number) => {
+            brightnessSlider.value = String(value)
+            brightnessValue.value = formatBrightnessOffset(value)
+            this.app.setScreenBrightness(value)
+        }
+        brightnessReset.addEventListener("click", () => applyBrightness(0))
+        brightnessRow.append(brightnessSlider, brightnessReset)
+        brightnessControl.append(brightnessHeader, brightnessRow)
         this.app.setScreenBrightness(initialScreenBrightness)
         root.appendChild(brightnessControl)
 
