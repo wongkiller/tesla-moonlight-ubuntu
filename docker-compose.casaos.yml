@@ -22,6 +22,11 @@ services:
     init: true
     shm_size: 1gb
     mem_limit: 8g
+    # AMD/Intel VAAPI. Multiple containers can share /dev/dri.
+    # If Docker fails to start because this host has no GPU, delete the devices block;
+    # the entrypoint then keeps encoder=software.
+    devices:
+      - /dev/dri
     security_opt:
       # CasaOS does not expose a custom seccomp-file field. This permits
       # Chrome's user-namespace sandbox without enabling privileged mode.

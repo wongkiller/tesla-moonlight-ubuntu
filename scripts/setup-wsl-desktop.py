@@ -124,9 +124,12 @@ WantedBy=default.target
     }
     config = state / 'sunshine/sunshine.conf'
     if not config.exists():
+        encoder = subprocess.check_output(
+            [sys.executable, str(Path(__file__).resolve().parent / 'select-sunshine-encoder.py')],
+            text=True).strip()
         write_private(config, f'''sunshine_name = Ubuntu 26.04 WSL Desktop
 capture = x11
-encoder = software
+encoder = {encoder}
 sw_preset = ultrafast
 sw_tune = zerolatency
 hevc_mode = 1

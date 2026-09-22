@@ -23,11 +23,12 @@ SUNSHINE_CONTAINER_NAME=sunshine-03 SUNSHINE_WEB_PORT=43881 \
 docker compose -f docker-compose.casaos.yml up -d
 ```
 
-The supplied Compose file sets `shm_size: 1gb`. CasaOS custom-app compose
-often drops that field, so the container entrypoint remounts `/dev/shm` to
-1 GiB at start. Chrome always uses `/dev/shm` — do not add
-`--disable-dev-shm-usage` (that path goes through `/tmp` overlay and lags
-audio/video).
+The supplied Compose file sets `shm_size: 1gb` and passes `/dev/dri` so Sunshine
+can use VAAPI (AMD/Intel). Several containers can share the same GPU. CasaOS
+custom-app compose often drops `shm_size` and `devices`; the entrypoint remounts
+`/dev/shm` to 1 GiB and sets `encoder = vaapi` only when `/dev/dri/renderD128`
+is usable, otherwise `encoder = software`. Chrome always uses `/dev/shm` — do
+not add `--disable-dev-shm-usage`.
 
 In CasaOS or Portainer, the same file can be pasted into the Compose/Stack web
 editor. Keep **Privileged mode disabled** and do not add a volume if you want the

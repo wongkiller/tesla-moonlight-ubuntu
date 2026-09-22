@@ -17,4 +17,15 @@ bash "$root_dir/scripts/bootstrap.sh"
 # CasaOS custom apps often strip compose shm_size, so Docker still gives 64 MiB.
 # Root in this namespace can enlarge the tmpfs without recreating the container.
 mount -o remount,size=1G /dev/shm || true
+# VAAPI when /dev/dri is present and writable; software otherwise.
+conf=/home/sunshine/.local/share/tesla-moonlight-ubuntu/wsl-desktop/sunshine/sunshine.conf
+python3 "$root_dir/scripts/select-sunshine-encoder.py" --apply "$conf" || true
+# Docker recreate changes hostname; Xauth cookies are hostname-scoped.
+auth=/home/sunshine/.local/share/tesla-moonlight-ubuntu/wsl-desktop/Xauthority
+if [ -f "$auth" ] && command -v xauth >/dev/null; then
+  cookie=$(xauth -f "$auth" list 2>/dev/null | awk 'NF>=3 {print $3; exit}')
+  if [ -n "$cookie" ]; then
+    xauth -f "$auth" add "$(hostname)/unix:99" MIT-MAGIC-COOKIE-1 "$cookie" 2>/dev/null || true
+  fi
+fi
 exec /usr/bin/supervisord -n -c /etc/tesla-moonlight-ubuntu/supervisord.conf

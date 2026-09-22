@@ -67,7 +67,8 @@ def install(config_path):
         temporary.chmod(0o755)
         temporary.replace(STATE / name)
     shutil.copytree(ROOT / 'build/runtime/static', STATE / 'static', dirs_exist_ok=True)
-    for name in ('container-service.py', 'pair-wsl-host.py', 'display-mode.py', 'start-wsl-desktop.sh'):
+    for name in ('container-service.py', 'pair-wsl-host.py', 'display-mode.py', 'start-wsl-desktop.sh',
+                 'select-sunshine-encoder.py'):
         shutil.copy2(ROOT / 'scripts' / name, STATE / name)
     shutil.copy2(ROOT / 'scripts/display-mode.py', desktop / 'display-mode.py')
     (desktop / 'display-mode.py').chmod(0o700)
@@ -88,9 +89,11 @@ set-default-sink tesla_wsl
 set-default-source tesla_wsl.monitor
 ''')
     sunshine_config = desktop / 'sunshine/sunshine.conf'
+    encoder = subprocess.check_output(
+        [sys.executable, str(ROOT / 'scripts/select-sunshine-encoder.py')], text=True).strip()
     write_private(sunshine_config, f'''sunshine_name = Ubuntu 26.04 Docker Desktop
 capture = x11
-encoder = software
+encoder = {encoder}
 sw_preset = ultrafast
 sw_tune = zerolatency
 hevc_mode = 1
