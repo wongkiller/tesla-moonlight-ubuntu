@@ -1,0 +1,30 @@
+# Grok Bot computer variant. The Grok Bot VM fake-IP-hijacks plain DNS (even to 1.1.1.1)
+# for Cloudflare names to 198.18.x, and that proxy only passes TCP/443. This breaks
+# cloudflared edges and the WebRTC TURN/STUN path, so pin real IPs via DoH before start
+# and refresh every 6h. See scripts/pin-cf-edges.sh. compose `dns:` is ignored with host networking.
+services:
+  main_app:
+    image: ubuntu:26.04
+    container_name: sunshine-02
+    network_mode: host
+    command:
+      - /bin/bash
+      - -lc
+      - >-
+        set -e;
+        export DEBIAN_FRONTEND=noninteractive;
+        printf 'nameserver 1.1.1.1\nnameserver 8.8.8.8\noptions timeout:2 attempts:2\n' > /etc/resolv.conf;
+        cd /opt/tesla-moonlight-ubuntu;
+        bash /opt/tesla-moonlight-ubuntu/scripts/pin-cf-edges.sh || true;
+        if getent hosts region1.v2.argotunnel.com | grep -q '^198\.18\.'; then echo 'WARN: argotunnel still sinkholed' >&2; fi;
+        (while sleep 21600; do bash /opt/tesla-moonlight-ubuntu/scripts/pin-cf-edges.sh >/dev/null 2>&1; done) &
+        exec bash install.sh --auto
+    volumes:
+      - /workspace/tesla-moonlight-ubuntu:/opt/tesla-moonlight-ubuntu
+    restart: unless-stopped
+    init: true
+    shm_size: 1gb
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      - DEBIAN_FRONTEND=noninteractive
